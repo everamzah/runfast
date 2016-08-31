@@ -1,3 +1,8 @@
+--[[	RUN & FAST [runfast]
+	Stamina (hunger) and sprinting mod
+	Copyright 2016 James Stevenson (everamzah)
+	LGPL v2.1+	]]
+
 local runfast = {}
 runfast.players = {}
 runfast.name = minetest.get_current_modname()
@@ -35,7 +40,7 @@ runfast.meters = {
 }
 
 if minetest.setting_getbool("runfast_display_hunger_meter") then
-	minetest.log("action", "Setting hunger meter.")
+	minetest.log("action", "[runfast] Setting hunger meter.")
 	runfast.meters.hunger = true
 	runfast.meters.def.hunger = {
 		hud_elem_type = "statbar",
@@ -49,7 +54,7 @@ if minetest.setting_getbool("runfast_display_hunger_meter") then
 end
 
 if minetest.setting_getbool("runfast_display_sprint_meter") then
-	minetest.log("action", "Setting sprint meter.")
+	minetest.log("action", "[runfast] Setting sprint meter.")
 	runfast.meters.sprint = true
 	runfast.meters.def.sprint = {
 		hud_elem_type = "statbar",
@@ -68,11 +73,11 @@ minetest.register_chatcommand("edibles", {
 	func = function(name, param)
 		if param == "food" then
 			for _, v in pairs(runfast.food) do
-				minetest.chat_send_player(name, v)
+				minetest.chat_send_player(name, minetest.registered_items[v].description)
 			end
 		elseif param == "poison" then
 			for _, v in pairs(runfast.poison) do
-				minetest.chat_send_player(name, v)
+				minetest.chat_send_player(name, minetest.registered_items[v].description)
 			end
 		else
 			minetest.chat_send_player(name, "Invalid usage.  Type /help edibles.")
@@ -80,19 +85,40 @@ minetest.register_chatcommand("edibles", {
 	end,
 })
 
-minetest.register_chatcommand("s", {
+minetest.register_chatcommand("stomach", {
+	description = "Query stomach contents, condition.",
+	params = "<clear> <contents>",
 	func = function(name, param)
-		if param == "c" then
+		if param == "clear" then
 			minetest.get_player_by_name(name):get_inventory():set_list("stomach", nil)
 			minetest.chat_send_player(name, "Clearing contents.")
+		else
+			local feels = {"You feel queasy.", "A little uneasy.", "Definitely cheesy."}
+			minetest.chat_send_player(name, feels[math.random(1, 3)])
+
+			print(dump(minetest.get_player_by_name(name):get_inventory():get_stack("stomach", 1):to_table()))
+
 		end
-		print(dump(minetest.get_player_by_name(name):get_inventory():get_stack("stomach", 1):to_table()))
+	end
+})
+
+minetest.register_chatcommand("stamina", {
+	description = "Display stamina information.",
+	params = "<raise>",
+	func = function(name, param)
+		minetest.chat_send_player(name,
+				tostring(runfast.players[name].stamina))
 	end
 })
 
 minetest.register_on_joinplayer(function(player)
+	minetest.log("action", "Stomach size is " ..
+			tostring(player:get_inventory():get_size("stomach")))
+
 	player:get_inventory():set_size("stomach", 1)
-	player:get_inventory():set_list("stomach", {})
+
+	--player:get_inventory():set_list("stomach", {})
+
 	runfast.players[player:get_player_name()] = {
 		sprinting = false,
 		stamina = 20,
@@ -134,10 +160,11 @@ minetest.register_globalstep(function(dtime)
 					)
 				end
 				runfast.players[player:get_player_name()].stamina = runfast.players[player:get_player_name()].stamina - 1
+				minetest.chat_send_player(player:get_player_name(), "Reducing stamina: " ..
+						tostring(runfast.players[player:get_player_name()].stamina))
 				hunger_timer = 0
 			end
 		end
-
 		sprint_timer = sprint_timer + dtime
 		if sprint_timer > runfast.time.sprint then
 			for _, player in pairs(minetest.get_connected_players()) do
@@ -149,10 +176,11 @@ minetest.register_globalstep(function(dtime)
 							player:hud_change(
 								runfast.meters.players[player:get_player_name()].sprint,
 								"number",
-								20
+								runfast.players[player:get_player_name()].stamina
 							)
 						end
 					end
+					runfast.players[player:get_player_name()].stamina = runfast.players[player:get_player_name()].stamina - 1
 				else
 					if runfast.players[player:get_player_name()].sprinting then
 						runfast.players[player:get_player_name()].sprinting = false
@@ -166,7 +194,6 @@ minetest.register_globalstep(function(dtime)
 						end
 					end
 				end
-
 				sprint_timer = 0
 			end
 		end
@@ -182,16 +209,26 @@ minetest.register_on_item_eat(function(hp_change, replace_with_item, itemstack, 
 	print(hp_change, replace_with_item, itemstack, user, pointed_thing)
 
 	user:get_inventory():add_item("stomach", itemstack)
-	minetest.after(runfast.time.hunger, function()
+
+	minetest.after(runfast.time.hunger * 1.5 - 1, function()
+		if not user then return end
 		user:get_inventory():set_list("stomach", {})
-	end, itemstack)
+		minetest.chat_send_player(user:get_player_name(), "Clearing contents.")
+	end)
+
 	minetest.chat_send_player(user:get_player_name(), "Ate " .. minetest.registered_items[itemstack:get_name()].description .. ".")
+	minetest.log(user:get_player_name(), user:get_player_name() .. " used " ..
+			minetest.registered_items[itemstack:get_name()].description .. ".")
 end)
 
 for _, v in pairs(runfast.food) do
-	minetest.log("action", v)
+	minetest.log("action", "[runfast] Adding " .. minetest.registered_items[v].description)
+
+	print(dump(minetest.registered_items[v].on_use))
 end
 
 for _, v in pairs(runfast.poison) do
-	minetest.log("action", v)
+	minetest.log("action", "[runfast] Adding " .. minetest.registered_items[v].description)
+
+	print(dump(minetest.registered_items[v].on_use))
 end
