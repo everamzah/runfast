@@ -205,7 +205,13 @@ minetest.register_globalstep(function(dtime)
 		sprint_timer = sprint_timer + dtime
 		if sprint_timer > runfast.time.sprint then
 			for _, player in pairs(minetest.get_connected_players()) do
-				if player:get_player_control().aux1 then
+				if player:get_player_control().aux1 and
+						runfast.players[player:get_player_name()].stamina ~= 0 and
+						(player:get_player_control().up or
+						player:get_player_control().down or
+						player:get_player_control().left or
+						player:get_player_control().right or
+						player:get_player_control().jump) then
 					if not runfast.players[player:get_player_name()].sprinting then
 						runfast.players[player:get_player_name()].sprinting = true
 						player:set_physics_override(runfast.sprint)
@@ -225,7 +231,13 @@ minetest.register_globalstep(function(dtime)
 						runfast.players[player:get_player_name()].sprinting = false
 						player:set_physics_override({speed = 1, jump = 1})
 					end
-					if runfast.players[player:get_player_name()].stamina < 20 then
+					if not player:get_player_control().aux1 and
+							not player:get_player_control().up and
+							not player:get_player_control().down and
+							not player:get_player_control().left and
+							not player:get_player_control().right and
+							not player:get_player_control().jump and
+							runfast.players[player:get_player_name()].stamina < 20 then
 						runfast.players[player:get_player_name()].stamina = runfast.players[player:get_player_name()].stamina + 1
 					end
 					if runfast.meters.sprint then
@@ -250,8 +262,7 @@ minetest.register_globalstep(function(dtime)
 		meter_timer = meter_timer + dtime
 		if meter_timer > runfast.time.meter then
 			for _, player in pairs(minetest.get_connected_players()) do
-				if runfast.meters.hunger and
-						runfast.players[player:get_player_name()].stamina ~= 20 then
+				if runfast.meters.hunger then
 					player:hud_change(
 						runfast.meters.players[player:get_player_name()].hunger,
 						"number",
