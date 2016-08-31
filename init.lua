@@ -5,7 +5,7 @@ runfast.path = minetest.get_modpath(runfast.name)
 
 runfast.time = {
 	poll = tonumber(minetest.setting_get("dedicated_server_step")) or 0.1,
-	hunger = tonumber(minetest.setting_get("runfast_hunger_step")) or 10,
+	hunger = tonumber(minetest.setting_get("runfast_hunger_step")) or 100,
 	sprint = tonumber(minetest.setting_get("dedicated_server_step")) or 0.1,
 }
 
@@ -137,6 +137,7 @@ end)
 
 minetest.register_on_item_eat(function(hp_change, replace_with_item, itemstack, user, pointed_thing)
 	print(hp_change, replace_with_item, itemstack, user, pointed_thing)
+	user:get_inventory():add_item("stomach", itemstack)
 end)
 
 for _, v in pairs(runfast.food) do

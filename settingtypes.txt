@@ -5,7 +5,7 @@ runfast_display_hunger_meter (Hunger Meter) bool false
 runfast_display_sprint_meter (Sprint Meter) bool false
 
 # Time between hunger checks
-runfast_hunger_step (Hunger Tick) int 10
+runfast_hunger_step (Hunger Tick) int 100
 
 # Sprinting speed
 runfast_sprint_speed (Sprinting Speed) float 1.667
