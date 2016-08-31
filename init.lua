@@ -230,13 +230,17 @@ end)
 
 minetest.register_on_item_eat(function(hp_change, replace_with_item, itemstack, user, pointed_thing)
 	if not user:get_inventory():is_empty("stomach") then
+		minetest.chat_send_player(user:get_player_name(), "You're not very hungry.")
 		return itemstack
 	end
 
-	-- TODO Conditionally adjust player's stamina per hp_change
-	print(hp_change, replace_with_item, itemstack, user, pointed_thing)
-
-	user:get_inventory():add_item("stomach", itemstack)
+	if hp_change > 0 then
+		user:get_inventory():add_item("stomach", itemstack)
+		minetest.chat_send_player(user:get_player_name(), "Yum!")
+	else
+		user:get_inventory():set_list("stomach", {})
+		minetest.chat_send_player(user:get_player_name(), "Yuck!")
+	end
 
 	-- TODO Use global table and file to set/remove stomach contents over time
 	minetest.after(runfast.time.hunger * 2.5 - 1, function()
