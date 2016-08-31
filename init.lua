@@ -19,13 +19,13 @@ runfast.hp_regen = minetest.setting_get("runfast_hp_regen") or false
 minetest.log("action", "[" .. runfast.name .. "] Heart regeneration: " ..
 		tostring(runfast.hp_regen))
 
--- Global poll step, hunger poll step, sprint poll step
+-- Master poll intervals
 runfast.time = {
 	poll = tonumber(minetest.setting_get("dedicated_server_step")) or 0.1,
-	hunger = tonumber(minetest.setting_get("runfast_hunger_step")) or 100,
+	hunger = tonumber(minetest.setting_get("runfast_hunger_step")) or 15.0,
 	sprint = tonumber(minetest.setting_get("dedicated_server_step")) or 0.1,
-	meter = tonumber(minetest.setting_get("runfast_meter_step")) or 1,
-	health = tonumber(minetest.setting_get("runfast_health_step")) or 10,
+	meter = tonumber(minetest.setting_get("runfast_meter_step")) or 0.1,
+	health = tonumber(minetest.setting_get("runfast_health_step")) or 0.2,
 }
 
 -- Edibles Index
@@ -197,7 +197,7 @@ minetest.register_globalstep(function(dtime)
 				if runfast.players[player:get_player_name()].stamina > 1 then
 					runfast.players[player:get_player_name()].stamina = runfast.players[player:get_player_name()].stamina - 1
 				end
-				minetest.chat_send_player(player:get_player_name(), "Reducing stamina to " ..
+				minetest.chat_send_player(player:get_player_name(), "New stamina: " ..
 						tostring(runfast.players[player:get_player_name()].stamina))
 				hunger_timer = 0
 			end
@@ -328,8 +328,12 @@ minetest.register_on_item_eat(function(hp_change, replace_with_item, itemstack, 
 
 	minetest.after(runfast.time.hunger, function()
 		if not user then return end
-		user:get_inventory():set_list("stomach", {})
 		minetest.chat_send_player(user:get_player_name(), "Clearing contents.")
+		if user:get_inventory():is_empty("stomach") then
+			user:set_hp(user:get_hp() - 1)
+			minetest.chat_send_player(user:get_player_name(), "Ouch!")
+		end
+		user:get_inventory():set_list("stomach", {})
 	end)
 
 	minetest.chat_send_player(user:get_player_name(), "Ate " ..
