@@ -51,9 +51,11 @@ runfast.meters = {
 	players = {},
 	hunger = false,
 	sprint = false,
+	debug = false,
 	def = {
 		hunger = {},
 		sprint = {},
+		debug = {},
 	},
 }
 
@@ -197,8 +199,6 @@ minetest.register_globalstep(function(dtime)
 				if runfast.players[player:get_player_name()].stamina > 1 then
 					runfast.players[player:get_player_name()].stamina = runfast.players[player:get_player_name()].stamina - 1
 				end
-				minetest.chat_send_player(player:get_player_name(), "New stamina: " ..
-						tostring(runfast.players[player:get_player_name()].stamina))
 				hunger_timer = 0
 			end
 		end
