@@ -180,10 +180,11 @@ minetest.register_globalstep(function(dtime)
 		if hunger_timer > runfast.time.hunger then
 			for _, player in pairs(minetest.get_connected_players()) do
 				if player:get_inventory():is_empty("stomach") then
-					runfast.players[player:get_player_name()].stamina = 1
+					runfast.players[player:get_player_name()].stamina = 5
 				else
 					runfast.players[player:get_player_name()].stamina = 20
 				end
+				--[[
 				if runfast.meters.hunger then
 					player:hud_change(
 						runfast.meters.players[player:get_player_name()].hunger,
@@ -191,6 +192,7 @@ minetest.register_globalstep(function(dtime)
 						runfast.players[player:get_player_name()].stamina
 					)
 				end
+				--]]
 				if runfast.players[player:get_player_name()].stamina > 1 then
 					runfast.players[player:get_player_name()].stamina = runfast.players[player:get_player_name()].stamina - 1
 				end
@@ -246,11 +248,30 @@ minetest.register_globalstep(function(dtime)
 		end
 		meter_timer = meter_timer + dtime
 		if meter_timer > runfast.time.meter then
-			if runfast.meters.hunger then
-				--player:hud_change()
-			end
-			if runfast.meters.sprint then
-				--player:hud_change()
+			for _, player in pairs(minetest.get_connected_players()) do
+				if runfast.meters.hunger and
+						runfast.players[player:get_player_name()].stamina ~= 20 then
+					player:hud_change(
+						runfast.meters.players[player:get_player_name()].hunger,
+						"number",
+						runfast.players[player:get_player_name()].stamina
+					)
+				end
+				if runfast.meters.sprint then
+					if runfast.players[player:get_player_name()].stamina ~= 20 then
+						player:hud_change(
+							runfast.meters.players[player:get_player_name()].sprint,
+							"number",
+							runfast.players[player:get_player_name()].stamina
+						)
+					elseif runfast.players[player:get_player_name()].stamina == 20 then
+						player:hud_change(
+							runfast.meters.players[player:get_player_name()].sprint,
+							"number",
+							0
+						)
+					end
+				end
 			end
 			meter_timer = 0
 		end
@@ -275,14 +296,19 @@ minetest.register_on_item_eat(function(hp_change, replace_with_item, itemstack, 
 
 	if hp_change > 0 then
 		user:get_inventory():add_item("stomach", itemstack)
-		runfast.players[user:get_player_name()].stamina = runfast.players[user:get_player_name()].stamina + hp_change
+		if runfast.players[user:get_player_name()].stamina < 20 and
+				runfast.players[user:get_player_name()].stamina < runfast.players[user:get_player_name()].stamina - hp_change then
+			runfast.players[user:get_player_name()].stamina = runfast.players[user:get_player_name()].stamina + hp_change
+		end
 		minetest.chat_send_player(user:get_player_name(),
 				"Yum! +" .. tostring(hp_change))
 		minetest.chat_send_player(user:get_player_name(),
 				"Stamina: " .. tostring(runfast.players[user:get_player_name()].stamina))
 	else
 		user:get_inventory():set_list("stomach", {})
-		runfast.players[user:get_player_name()].stamina = runfast.players[user:get_player_name()].stamina + hp_change
+		if runfast.players[user:get_player_name()].stamina > math.abs(hp_change) then
+			runfast.players[user:get_player_name()].stamina = runfast.players[user:get_player_name()].stamina + hp_change
+		end
 		minetest.chat_send_player(user:get_player_name(),
 				"Yuck! " .. tostring(hp_change))
 		minetest.chat_send_player(user:get_player_name(),
@@ -290,13 +316,12 @@ minetest.register_on_item_eat(function(hp_change, replace_with_item, itemstack, 
 	end
 
 	-- TODO Use global table and file to set/remove stomach contents over time
-	minetest.after(runfast.time.hunger * 2.5 - 1, function()
+	minetest.after(runfast.time.hunger, function()
 		if not user then return end
 		user:get_inventory():set_list("stomach", {})
 		minetest.chat_send_player(user:get_player_name(), "Clearing contents.")
 	end)
 
-	runfast.players[user:get_player_name()].stamina = runfast.players[user:get_player_name()].stamina + 1
 	minetest.chat_send_player(user:get_player_name(), "Ate " ..
 			minetest.registered_items[itemstack:get_name()].description .. ".")
 	minetest.log("action", user:get_player_name() .. " ate " ..
