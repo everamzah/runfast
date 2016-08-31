@@ -55,7 +55,7 @@ if minetest.setting_getbool("runfast_display_sprint_meter") then
 		hud_elem_type = "statbar",
 		position = {x = 0.5, y = 1},
 		text = "runfast_sprint_sb.png",
-		number = 20,
+		number = 0,
 		direction = 0,
 		size = {x = 24, y = 24},
 		offset = {x = 25, y = -(48 + 24 + 40)},
@@ -78,6 +78,12 @@ minetest.register_chatcommand("edibles", {
 			minetest.chat_send_player(name, "Invalid usage.  Type /help edibles.")
 		end
 	end,
+})
+
+minetest.register_chatcommand("s", {
+	func = function(name)
+		print(dump(minetest.get_player_by_name(name):get_inventory():get_stack("stomach", 1):to_table()))
+	end
 })
 
 minetest.register_on_joinplayer(function(player)
@@ -108,33 +114,51 @@ local sprint_timer = 0
 minetest.register_globalstep(function(dtime)
 	poll_timer = poll_timer + dtime
 	if poll_timer > runfast.time.poll then
-		for _, player in pairs(minetest.get_connected_players()) do
-			hunger_timer = hunger_timer + dtime
-			if hunger_timer > runfast.time.hunger then
+		hunger_timer = hunger_timer + dtime
+		if hunger_timer > runfast.time.hunger then
+			for _, player in pairs(minetest.get_connected_players()) do
 				if player:get_inventory():is_empty("stomach") then
 					runfast.players[player:get_player_name()].stamina = 0
-					if runfast.meters.hunger then
-						player:hud_change(runfast.meters.players[player:get_player_name()].hunger, "number", 0)
-					end
-					minetest.chat_send_player(player:get_player_name(), "Your stomach is empty.")
 				else
 					runfast.players[player:get_player_name()].stamina = 20
-					if runfast.meters.hunger then
-						player:hud_change(runfast.meters.players[player:get_player_name()].hunger, "number", 20)
-					end
-					minetest.chat_send_player(player:get_player_name(), "You're sated.")
 				end
+				if runfast.meters.hunger then
+					player:hud_change(
+						runfast.meters.players[player:get_player_name()].hunger,
+						"number",
+						runfast.players[player:get_player_name()].stamina
+					)
+				end
+				runfast.players[player:get_player_name()].stamina = runfast.players[player:get_player_name()].stamina - 1
 				hunger_timer = 0
 			end
-			sprint_timer = sprint_timer + dtime
-			if sprint_timer > runfast.time.sprint then
+		end
+
+		sprint_timer = sprint_timer + dtime
+		if sprint_timer > runfast.time.sprint then
+			for _, player in pairs(minetest.get_connected_players()) do
 				if player:get_player_control().aux1 then
-					runfast.players[player:get_player_name()].sprinting = true
-					player:set_physics_override(runfast.sprint)
+					if not runfast.players[player:get_player_name()].sprinting then
+						runfast.players[player:get_player_name()].sprinting = true
+						player:set_physics_override(runfast.sprint)
+						player:hud_change(
+							runfast.meters.players[player:get_player_name()].sprint,
+							"number",
+							20 --runfast.players[player:get_player_name()].stamina
+						)
+					end
 				else
-					runfast.players[player:get_player_name()].sprinting = false
-					player:set_physics_override({speed = 1, jump = 1})
+					if runfast.players[player:get_player_name()].sprinting then
+						runfast.players[player:get_player_name()].sprinting = false
+						player:set_physics_override({speed = 1, jump = 1})
+						player:hud_change(
+							runfast.meters.players[player:get_player_name()].sprint,
+							"number",
+							0
+						)
+					end
 				end
+
 				sprint_timer = 0
 			end
 		end
@@ -143,8 +167,17 @@ minetest.register_globalstep(function(dtime)
 end)
 
 minetest.register_on_item_eat(function(hp_change, replace_with_item, itemstack, user, pointed_thing)
+	if not user:get_inventory():is_empty("stomach") then
+		return
+	end
+
 	print(hp_change, replace_with_item, itemstack, user, pointed_thing)
+
 	user:get_inventory():add_item("stomach", itemstack)
+	minetest.after(runfast.time.hunger, function()
+		user:get_inventory():set_list("stomach", {})
+	end, itemstack)
+	minetest.chat_send_player(user:get_player_name(), "Ate " .. itemstack:get_name() .. ".")
 end)
 
 for _, v in pairs(runfast.food) do
