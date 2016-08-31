@@ -14,11 +14,18 @@ runfast.path = minetest.get_modpath(runfast.name)
 minetest.log("action", "[" .. runfast.name .. "] Loading.")
 minetest.log("action", "[" .. runfast.name .. "] " .. runfast.path)
 
+-- Heart regeneration
+runfast.hp_regen = minetest.setting_get("runfast_hp_regen") or false
+minetest.log("action", "[" .. runfast.name .. "] Heart regeneration: " ..
+		tostring(runfast.hp_regen))
+
 -- Global poll step, hunger poll step, sprint poll step
 runfast.time = {
 	poll = tonumber(minetest.setting_get("dedicated_server_step")) or 0.1,
 	hunger = tonumber(minetest.setting_get("runfast_hunger_step")) or 100,
 	sprint = tonumber(minetest.setting_get("dedicated_server_step")) or 0.1,
+	meter = tonumber(minetest.setting_get("runfast_meter_step")) or 1,
+	health = tonumber(minetest.setting_get("runfast_health_step")) or 10,
 }
 
 -- Edibles Index
@@ -163,6 +170,8 @@ end)
 local poll_timer = 0
 local hunger_timer = 0
 local sprint_timer = 0
+local meter_timer = 0
+local health_timer = 0
 
 minetest.register_globalstep(function(dtime)
 	poll_timer = poll_timer + dtime
@@ -171,7 +180,7 @@ minetest.register_globalstep(function(dtime)
 		if hunger_timer > runfast.time.hunger then
 			for _, player in pairs(minetest.get_connected_players()) do
 				if player:get_inventory():is_empty("stomach") then
-					runfast.players[player:get_player_name()].stamina = 0
+					runfast.players[player:get_player_name()].stamina = 1
 				else
 					runfast.players[player:get_player_name()].stamina = 20
 				end
@@ -197,7 +206,33 @@ minetest.register_globalstep(function(dtime)
 					if not runfast.players[player:get_player_name()].sprinting then
 						runfast.players[player:get_player_name()].sprinting = true
 						player:set_physics_override(runfast.sprint)
-						if runfast.meters.sprint then
+					end
+					if runfast.players[player:get_player_name()].stamina > 0 then
+						runfast.players[player:get_player_name()].stamina = runfast.players[player:get_player_name()].stamina - 0.1
+					end
+					if runfast.meters.sprint then
+						player:hud_change(
+							runfast.meters.players[player:get_player_name()].sprint,
+							"number",
+							runfast.players[player:get_player_name()].stamina
+						)
+					end
+				else
+					if runfast.players[player:get_player_name()].sprinting then
+						runfast.players[player:get_player_name()].sprinting = false
+						player:set_physics_override({speed = 1, jump = 1})
+					end
+					if runfast.players[player:get_player_name()].stamina < 20 then
+						runfast.players[player:get_player_name()].stamina = runfast.players[player:get_player_name()].stamina + 1
+					end
+					if runfast.meters.sprint then
+						if runfast.players[player:get_player_name()].stamina == 20 then
+							player:hud_change(
+								runfast.meters.players[player:get_player_name()].sprint,
+								"number",
+								0
+							)
+						elseif runfast.players[player:get_player_name()].stamina < 20 then
 							player:hud_change(
 								runfast.meters.players[player:get_player_name()].sprint,
 								"number",
@@ -205,24 +240,28 @@ minetest.register_globalstep(function(dtime)
 							)
 						end
 					end
-					if runfast.players[player:get_player_name()].stamina > 0 then
-						runfast.players[player:get_player_name()].stamina = runfast.players[player:get_player_name()].stamina - 0.1
-					end
-				else
-					if runfast.players[player:get_player_name()].sprinting then
-						runfast.players[player:get_player_name()].sprinting = false
-						player:set_physics_override({speed = 1, jump = 1})
-						if runfast.meters.sprint then
-							player:hud_change(
-								runfast.meters.players[player:get_player_name()].sprint,
-								"number",
-								0
-							)
-						end
-					end
 				end
 				sprint_timer = 0
 			end
+		end
+		meter_timer = meter_timer + dtime
+		if meter_timer > runfast.time.meter then
+			if runfast.meters.hunger then
+				--player:hud_change()
+			end
+			if runfast.meters.sprint then
+				--player:hud_change()
+			end
+			meter_timer = 0
+		end
+		health_timer = health_timer + dtime
+		if runfast.hp_regen and health_timer > runfast.time.health then
+			for _, player in pairs(minetest.get_connected_players()) do
+				if player:get_hp() > 10 and player:get_hp() < 20 then
+					player:set_hp(player:get_hp() + 1)
+				end
+			end
+			health_timer = 0
 		end
 		poll_timer = 0
 	end
