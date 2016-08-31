@@ -1,0 +1,14 @@
+# Set to display hunger meter
+runfast_display_hunger_meter (Hunger Meter) bool false
+
+# Set to display sprint meter
+runfast_display_sprint_meter (Sprint Meter) bool false
+
+# Time between hunger checks
+runfast_hunger_step (Hunger Tick) int 10
+
+# Sprinting speed
+runfast_sprint_speed (Sprinting Speed) float 1.667
+
+# Sprint jump height
+runfast_sprint_jump (Sprinting Jump Height) float 1.334
