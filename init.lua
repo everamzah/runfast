@@ -15,7 +15,7 @@ minetest.log("action", "[" .. runfast.name .. "] Loading.")
 minetest.log("action", "[" .. runfast.name .. "] " .. runfast.path)
 
 -- Heart regeneration
-runfast.hp_regen = minetest.setting_get("runfast_hp_regen") or false
+runfast.hp_regen = minetest.setting_getbool("runfast_hp_regen") or false
 minetest.log("action", "[" .. runfast.name .. "] Heart regeneration: " ..
 		tostring(runfast.hp_regen))
 
@@ -124,27 +124,6 @@ minetest.register_chatcommand("edibles", {
 	end,
 })
 
-minetest.register_chatcommand("stomach", {
-	description = "Query stomach contents, condition.",
-	params = "<clear> <contents>",
-	func = function(name, param)
-		if param == "clear" then
-			minetest.get_player_by_name(name):get_inventory():set_list("stomach", {})
-			minetest.chat_send_player(name, "Clearing contents.")
-		elseif param == "contents" then
-			minetest.chat_send_player(name, "Attempting to dump stomach contents to pipe.")
-
-			print(dump(minetest.get_player_by_name(name):get_inventory():get_stack("stomach", 1):to_table()))
-
-		elseif param == "" then
-			local feels = {"You feel queasy.", "A little uneasy.", "Definitely cheesy."}
-			minetest.chat_send_player(name, feels[math.random(1, 3)])
-		else
-			minetest.chat_send_player(name, "Invalid usage.  Type /help stomach.")
-		end
-	end
-})
-
 -- Register callbacks
 minetest.register_on_joinplayer(function(player)
 	minetest.log("action", "Stomach size is " ..
@@ -185,12 +164,12 @@ minetest.register_globalstep(function(dtime)
 		hunger_timer = hunger_timer + dtime
 		if hunger_timer > runfast.time.hunger then
 			for _, player in pairs(minetest.get_connected_players()) do
-				runfast.players[player:get_player_name()].satiation = runfast.players[player:get_player_name()].satiation - 1
-				if runfast.players[player:get_player_name()].stamina > 1 then
-					runfast.players[player:get_player_name()].stamina = runfast.players[player:get_player_name()].stamina - 1
+				if runfast.players[player:get_player_name()].satiation > 1 then
+					runfast.players[player:get_player_name()].satiation = runfast.players[player:get_player_name()].satiation - 1
+					player:get_inventory():set_list("stomach", {})
 				end
-				hunger_timer = 0
 			end
+			hunger_timer = 0
 		end
 		sprint_timer = sprint_timer + dtime
 		if sprint_timer > runfast.time.sprint then
@@ -246,8 +225,8 @@ minetest.register_globalstep(function(dtime)
 						end
 					end
 				end
-				sprint_timer = 0
 			end
+			sprint_timer = 0
 		end
 		meter_timer = meter_timer + dtime
 		if meter_timer > runfast.time.meter then
@@ -278,12 +257,15 @@ minetest.register_globalstep(function(dtime)
 			meter_timer = 0
 		end
 		health_timer = health_timer + dtime
-		if runfast.hp_regen and health_timer > runfast.time.health then
-			for _, player in pairs(minetest.get_connected_players()) do
-				if runfast.players[player:get_player_name()].stamina == 20 and
-						runfast.players[player:get_player_name()].satiation == 20 and
-						player:get_hp() > 0 and player:get_hp() < 20 then
-					player:set_hp(player:get_hp() + 1)
+		if health_timer > runfast.time.health then
+			if runfast.hp_regen then
+				for _, player in pairs(minetest.get_connected_players()) do
+					-- Heart regeneration
+					if runfast.players[player:get_player_name()].stamina == 20 and
+							runfast.players[player:get_player_name()].satiation == 20 and
+							player:get_hp() > 0 and player:get_hp() < 20 then
+						player:set_hp(player:get_hp() + 1)
+					end
 				end
 			end
 			health_timer = 0
@@ -316,7 +298,12 @@ minetest.register_on_item_eat(function(hp_change, replace_with_item, itemstack, 
 			runfast.players[user:get_player_name()].satiation = runfast.players[user:get_player_name()].satiation + hp_change
 		end
 		minetest.chat_send_player(user:get_player_name(),
-				"Yum! +" .. tostring(hp_change))
+				"Yum!  Ate " ..
+						minetest.registered_items[itemstack:get_name()].description ..
+						" +" .. tostring(hp_change))
+		if not runfast.hp_regen then
+			user:set_hp(user:get_hp() + hp_change)
+		end
 	else
 		user:get_inventory():set_list("stomach", {})
 		if runfast.players[user:get_player_name()].satiation > math.abs(hp_change) then
@@ -327,18 +314,7 @@ minetest.register_on_item_eat(function(hp_change, replace_with_item, itemstack, 
 		user:set_hp(user:get_hp() + hp_change)
 	end
 
-	minetest.after(runfast.time.hunger, function()
-		if not user then return end
-		if user:get_inventory():is_empty("stomach") then
-			user:set_hp(user:get_hp() - 1)
-			minetest.chat_send_player(user:get_player_name(), "Ouch!")
-		end
-		user:get_inventory():set_list("stomach", {})
-	end)
-
 	itemstack:take_item()
-	minetest.chat_send_player(user:get_player_name(), "Ate " ..
-			minetest.registered_items[itemstack:get_name()].description .. ".")
 	minetest.log("action", user:get_player_name() .. " ate " ..
 			minetest.registered_items[itemstack:get_name()].description .. ".")
 	return itemstack
