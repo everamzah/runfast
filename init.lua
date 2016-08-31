@@ -141,21 +141,25 @@ minetest.register_globalstep(function(dtime)
 					if not runfast.players[player:get_player_name()].sprinting then
 						runfast.players[player:get_player_name()].sprinting = true
 						player:set_physics_override(runfast.sprint)
-						player:hud_change(
-							runfast.meters.players[player:get_player_name()].sprint,
-							"number",
-							20 --runfast.players[player:get_player_name()].stamina
-						)
+						if runfast.meters.sprint then
+							player:hud_change(
+								runfast.meters.players[player:get_player_name()].sprint,
+								"number",
+								20 --runfast.players[player:get_player_name()].stamina
+							)
+						end
 					end
 				else
 					if runfast.players[player:get_player_name()].sprinting then
 						runfast.players[player:get_player_name()].sprinting = false
 						player:set_physics_override({speed = 1, jump = 1})
-						player:hud_change(
-							runfast.meters.players[player:get_player_name()].sprint,
-							"number",
-							0
-						)
+						if runfast.meters.sprint then
+							player:hud_change(
+								runfast.meters.players[player:get_player_name()].sprint,
+								"number",
+								0
+							)
+						end
 					end
 				end
 
