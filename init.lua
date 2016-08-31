@@ -90,6 +90,17 @@ else
 	minetest.log("action", "[" .. runfast.name .. "] Not setting sprint meter.")
 end
 
+if minetest.setting_getbool("runfast_display_debug_meter") then
+	runfast.meters.debug = true
+	runfast.meters.def.debug = {
+		hud_elem_type = "text",
+		number = 0xFFFFFF,
+		position = {x = 0, y = 0},
+		offset = {x = 20, y = 352},
+		text = "20",
+	}
+end
+
 -- Register chat commands
 minetest.register_chatcommand("edibles", {
 	description = "List edibles, including poisons.",
@@ -143,21 +154,20 @@ minetest.register_chatcommand("stamina", {
 minetest.register_on_joinplayer(function(player)
 	minetest.log("action", "Stomach size is " ..
 			tostring(player:get_inventory():get_size("stomach")))
-
 	player:get_inventory():set_size("stomach", 1)
-
-	--player:get_inventory():set_list("stomach", {})
-
 	runfast.players[player:get_player_name()] = {
 		sprinting = false,
 		stamina = 20,
 	}
-	runfast.meters.players[player:get_player_name()] = {hunger = -1, sprint = -1}
+	runfast.meters.players[player:get_player_name()] = {hunger = -1, sprint = -1, debug = -1}
 	if runfast.meters.hunger then
 		runfast.meters.players[player:get_player_name()].hunger = player:hud_add(runfast.meters.def.hunger)
 	end
 	if runfast.meters.sprint then
 		runfast.meters.players[player:get_player_name()].sprint = player:hud_add(runfast.meters.def.sprint)
+	end
+	if runfast.meters.debug then
+		runfast.meters.players[player:get_player_name()].debug = player:hud_add(runfast.meters.def.debug)
 	end
 end)
 
@@ -184,15 +194,6 @@ minetest.register_globalstep(function(dtime)
 				else
 					runfast.players[player:get_player_name()].stamina = 20
 				end
-				--[[
-				if runfast.meters.hunger then
-					player:hud_change(
-						runfast.meters.players[player:get_player_name()].hunger,
-						"number",
-						runfast.players[player:get_player_name()].stamina
-					)
-				end
-				--]]
 				if runfast.players[player:get_player_name()].stamina > 1 then
 					runfast.players[player:get_player_name()].stamina = runfast.players[player:get_player_name()].stamina - 1
 				end
@@ -210,7 +211,7 @@ minetest.register_globalstep(function(dtime)
 						player:set_physics_override(runfast.sprint)
 					end
 					if runfast.players[player:get_player_name()].stamina > 0 then
-						runfast.players[player:get_player_name()].stamina = runfast.players[player:get_player_name()].stamina - 0.1
+						runfast.players[player:get_player_name()].stamina = runfast.players[player:get_player_name()].stamina - 1
 					end
 					if runfast.meters.sprint then
 						player:hud_change(
@@ -228,17 +229,17 @@ minetest.register_globalstep(function(dtime)
 						runfast.players[player:get_player_name()].stamina = runfast.players[player:get_player_name()].stamina + 1
 					end
 					if runfast.meters.sprint then
-						if runfast.players[player:get_player_name()].stamina == 20 then
-							player:hud_change(
-								runfast.meters.players[player:get_player_name()].sprint,
-								"number",
-								0
-							)
-						elseif runfast.players[player:get_player_name()].stamina < 20 then
+						if runfast.players[player:get_player_name()].stamina < 20 then
 							player:hud_change(
 								runfast.meters.players[player:get_player_name()].sprint,
 								"number",
 								runfast.players[player:get_player_name()].stamina
+							)
+						else
+							player:hud_change(
+								runfast.meters.players[player:get_player_name()].sprint,
+								"number",
+								0
 							)
 						end
 					end
@@ -278,11 +279,21 @@ minetest.register_globalstep(function(dtime)
 		health_timer = health_timer + dtime
 		if runfast.hp_regen and health_timer > runfast.time.health then
 			for _, player in pairs(minetest.get_connected_players()) do
-				if player:get_hp() > 10 and player:get_hp() < 20 then
+				if runfast.players[player:get_player_name()].stamina == 20 and
+						player:get_hp() > 0 and player:get_hp() < 20 then
 					player:set_hp(player:get_hp() + 1)
 				end
 			end
 			health_timer = 0
+		end
+		if runfast.meters.debug then
+			for _, player in pairs(minetest.get_connected_players()) do
+				player:hud_change(
+					runfast.meters.players[player:get_player_name()].debug,
+					"text",
+					tonumber(runfast.players[player:get_player_name()].stamina)
+				)
+			end
 		end
 		poll_timer = 0
 	end
@@ -315,7 +326,6 @@ minetest.register_on_item_eat(function(hp_change, replace_with_item, itemstack, 
 				"Stamina: " .. tostring(runfast.players[user:get_player_name()].stamina))
 	end
 
-	-- TODO Use global table and file to set/remove stomach contents over time
 	minetest.after(runfast.time.hunger, function()
 		if not user then return end
 		user:get_inventory():set_list("stomach", {})
