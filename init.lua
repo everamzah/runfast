@@ -6,8 +6,8 @@
 
 -- Mod Space
 local runfast = {}
-
 runfast.players = {}
+
 runfast.name = minetest.get_current_modname()
 runfast.path = minetest.get_modpath(runfast.name)
 
@@ -286,16 +286,28 @@ minetest.register_globalstep(function(dtime)
 end)
 
 minetest.register_on_item_eat(function(hp_change, replace_with_item, itemstack, user, pointed_thing)
-	if not user:get_inventory():is_empty("stomach") then
-		minetest.chat_send_player(user:get_player_name(), "You're not very hungry.")
-		return itemstack
+	if runfast.hp_regen then
+		if runfast.players[user:get_player_name()].satiation == 20 then
+			minetest.chat_send_player(user:get_player_name(), "You're not very hungry.")
+			return itemstack
+		end
+	else
+		if runfast.players[user:get_player_name()].satiation == 20 and
+				user:get_hp() == 20 then
+			minetest.chat_send_player(user:get_player_name(), "You're not very hungry.")
+			return itemstack
+		end
 	end
 
 	if hp_change > 0 then
 		user:get_inventory():add_item("stomach", itemstack)
 		if runfast.players[user:get_player_name()].satiation < 20 and
-				runfast.players[user:get_player_name()].satiation < runfast.players[user:get_player_name()].satiation - hp_change then
-			runfast.players[user:get_player_name()].satiation = runfast.players[user:get_player_name()].satiation + hp_change
+				runfast.players[user:get_player_name()].satiation > 0 then
+			if runfast.players[user:get_player_name()].satiation + hp_change > 20 then
+				runfast.players[user:get_player_name()].satiation = 20
+			else
+				runfast.players[user:get_player_name()].satiation = runfast.players[user:get_player_name()].satiation + hp_change
+			end
 		end
 		minetest.chat_send_player(user:get_player_name(),
 				"Yum!  Ate " ..
@@ -310,13 +322,13 @@ minetest.register_on_item_eat(function(hp_change, replace_with_item, itemstack, 
 			runfast.players[user:get_player_name()].satiation = runfast.players[user:get_player_name()].satiation + hp_change
 		end
 		minetest.chat_send_player(user:get_player_name(),
-				"Yuck! " .. tostring(hp_change))
+				"Yuck!  Ate " ..
+						minetest.registered_items[itemstack:get_name()].description ..
+						" " .. tostring(hp_change))
 		user:set_hp(user:get_hp() + hp_change)
 	end
 
 	itemstack:take_item()
-	minetest.log("action", user:get_player_name() .. " ate " ..
-			minetest.registered_items[itemstack:get_name()].description .. ".")
 	return itemstack
 end)
 
