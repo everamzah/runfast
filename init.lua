@@ -92,12 +92,16 @@ minetest.register_chatcommand("stomach", {
 		if param == "clear" then
 			minetest.get_player_by_name(name):get_inventory():set_list("stomach", nil)
 			minetest.chat_send_player(name, "Clearing contents.")
-		else
-			local feels = {"You feel queasy.", "A little uneasy.", "Definitely cheesy."}
-			minetest.chat_send_player(name, feels[math.random(1, 3)])
+		elseif param == "contents" then
+			minetest.chat_send_player(name, "Attempting to dump stomach contents to pipe.")
 
 			print(dump(minetest.get_player_by_name(name):get_inventory():get_stack("stomach", 1):to_table()))
 
+		elseif param == "" then
+			local feels = {"You feel queasy.", "A little uneasy.", "Definitely cheesy."}
+			minetest.chat_send_player(name, feels[math.random(1, 3)])
+		else
+			minetest.chat_send_player(name, "Invalid usage.  Type /help stomach.")
 		end
 	end
 })
@@ -159,8 +163,10 @@ minetest.register_globalstep(function(dtime)
 						runfast.players[player:get_player_name()].stamina
 					)
 				end
-				runfast.players[player:get_player_name()].stamina = runfast.players[player:get_player_name()].stamina - 1
-				minetest.chat_send_player(player:get_player_name(), "Reducing stamina: " ..
+				if runfast.players[player:get_player_name()].stamina > 1 then
+					runfast.players[player:get_player_name()].stamina = runfast.players[player:get_player_name()].stamina - 1
+				end
+				minetest.chat_send_player(player:get_player_name(), "Reducing stamina to " ..
 						tostring(runfast.players[player:get_player_name()].stamina))
 				hunger_timer = 0
 			end
@@ -180,7 +186,9 @@ minetest.register_globalstep(function(dtime)
 							)
 						end
 					end
-					runfast.players[player:get_player_name()].stamina = runfast.players[player:get_player_name()].stamina - 1
+					if runfast.players[player:get_player_name()].stamina > 0 then
+						runfast.players[player:get_player_name()].stamina = runfast.players[player:get_player_name()].stamina - 0.1
+					end
 				else
 					if runfast.players[player:get_player_name()].sprinting then
 						runfast.players[player:get_player_name()].sprinting = false
@@ -216,19 +224,16 @@ minetest.register_on_item_eat(function(hp_change, replace_with_item, itemstack, 
 		minetest.chat_send_player(user:get_player_name(), "Clearing contents.")
 	end)
 
+	runfast.players[user:get_player_name()].stamina = runfast.players[user:get_player_name()].stamina + 1
 	minetest.chat_send_player(user:get_player_name(), "Ate " .. minetest.registered_items[itemstack:get_name()].description .. ".")
-	minetest.log(user:get_player_name(), user:get_player_name() .. " used " ..
+	minetest.log("action", user:get_player_name() .. " used " ..
 			minetest.registered_items[itemstack:get_name()].description .. ".")
 end)
 
 for _, v in pairs(runfast.food) do
 	minetest.log("action", "[runfast] Adding " .. minetest.registered_items[v].description)
-
-	print(dump(minetest.registered_items[v].on_use))
 end
 
 for _, v in pairs(runfast.poison) do
 	minetest.log("action", "[runfast] Adding " .. minetest.registered_items[v].description)
-
-	print(dump(minetest.registered_items[v].on_use))
 end
