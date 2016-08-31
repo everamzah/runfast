@@ -81,7 +81,11 @@ minetest.register_chatcommand("edibles", {
 })
 
 minetest.register_chatcommand("s", {
-	func = function(name)
+	func = function(name, param)
+		if param == "c" then
+			minetest.get_player_by_name(name):get_inventory():set_list("stomach", nil)
+			minetest.chat_send_player(name, "Clearing contents.")
+		end
 		print(dump(minetest.get_player_by_name(name):get_inventory():get_stack("stomach", 1):to_table()))
 	end
 })
@@ -145,7 +149,7 @@ minetest.register_globalstep(function(dtime)
 							player:hud_change(
 								runfast.meters.players[player:get_player_name()].sprint,
 								"number",
-								20 --runfast.players[player:get_player_name()].stamina
+								20
 							)
 						end
 					end
@@ -181,7 +185,7 @@ minetest.register_on_item_eat(function(hp_change, replace_with_item, itemstack, 
 	minetest.after(runfast.time.hunger, function()
 		user:get_inventory():set_list("stomach", {})
 	end, itemstack)
-	minetest.chat_send_player(user:get_player_name(), "Ate " .. itemstack:get_name() .. ".")
+	minetest.chat_send_player(user:get_player_name(), "Ate " .. minetest.registered_items[itemstack:get_name()].description .. ".")
 end)
 
 for _, v in pairs(runfast.food) do
