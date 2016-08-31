@@ -236,10 +236,18 @@ minetest.register_on_item_eat(function(hp_change, replace_with_item, itemstack, 
 
 	if hp_change > 0 then
 		user:get_inventory():add_item("stomach", itemstack)
-		minetest.chat_send_player(user:get_player_name(), "Yum!")
+		runfast.players[user:get_player_name()].stamina = runfast.players[user:get_player_name()].stamina + hp_change
+		minetest.chat_send_player(user:get_player_name(),
+				"Yum! +" .. tostring(hp_change))
+		minetest.chat_send_player(user:get_player_name(),
+				"Stamina: " .. tostring(runfast.players[user:get_player_name()].stamina))
 	else
 		user:get_inventory():set_list("stomach", {})
-		minetest.chat_send_player(user:get_player_name(), "Yuck!")
+		runfast.players[user:get_player_name()].stamina = runfast.players[user:get_player_name()].stamina + hp_change
+		minetest.chat_send_player(user:get_player_name(),
+				"Yuck! " .. tostring(hp_change))
+		minetest.chat_send_player(user:get_player_name(),
+				"Stamina: " .. tostring(runfast.players[user:get_player_name()].stamina))
 	end
 
 	-- TODO Use global table and file to set/remove stomach contents over time
