@@ -63,6 +63,8 @@ if minetest.setting_getbool("runfast_display_hunger_meter") then
 		size = {x = 24, y = 24},
 		offset = {x = (-10 * 24) - 25, y = -(48 + 24 + 40)},
 	}
+else
+	minetest.log("action", "[" .. runfast.name .. "] Not setting hunger meter.")
 end
 
 if minetest.setting_getbool("runfast_display_sprint_meter") then
@@ -77,6 +79,8 @@ if minetest.setting_getbool("runfast_display_sprint_meter") then
 		size = {x = 24, y = 24},
 		offset = {x = 25, y = -(48 + 24 + 40)},
 	}
+else
+	minetest.log("action", "[" .. runfast.name .. "] Not setting sprint meter.")
 end
 
 -- Register chat commands
@@ -103,7 +107,7 @@ minetest.register_chatcommand("stomach", {
 	params = "<clear> <contents>",
 	func = function(name, param)
 		if param == "clear" then
-			minetest.get_player_by_name(name):get_inventory():set_list("stomach", nil)
+			minetest.get_player_by_name(name):get_inventory():set_list("stomach", {})
 			minetest.chat_send_player(name, "Clearing contents.")
 		elseif param == "contents" then
 			minetest.chat_send_player(name, "Attempting to dump stomach contents to pipe.")
@@ -226,7 +230,7 @@ end)
 
 minetest.register_on_item_eat(function(hp_change, replace_with_item, itemstack, user, pointed_thing)
 	if not user:get_inventory():is_empty("stomach") then
-		return
+		return itemstack
 	end
 
 	-- TODO Conditionally adjust player's stamina per hp_change
@@ -235,7 +239,7 @@ minetest.register_on_item_eat(function(hp_change, replace_with_item, itemstack, 
 	user:get_inventory():add_item("stomach", itemstack)
 
 	-- TODO Use global table and file to set/remove stomach contents over time
-	minetest.after(runfast.time.hunger * 1.5 - 1, function()
+	minetest.after(runfast.time.hunger * 2.5 - 1, function()
 		if not user then return end
 		user:get_inventory():set_list("stomach", {})
 		minetest.chat_send_player(user:get_player_name(), "Clearing contents.")
