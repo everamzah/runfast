@@ -167,6 +167,8 @@ minetest.register_globalstep(function(dtime)
 				if runfast.players[player:get_player_name()].satiation > 1 then
 					runfast.players[player:get_player_name()].satiation = runfast.players[player:get_player_name()].satiation - 1
 					player:get_inventory():set_list("stomach", {})
+				else
+					player:set_hp(player:get_hp() - 4)
 				end
 			end
 			hunger_timer = 0
@@ -186,7 +188,7 @@ minetest.register_globalstep(function(dtime)
 						player:set_physics_override(runfast.sprint)
 					end
 					if runfast.players[player:get_player_name()].stamina > 0 then
-						runfast.players[player:get_player_name()].stamina = runfast.players[player:get_player_name()].stamina - 1
+						runfast.players[player:get_player_name()].stamina = runfast.players[player:get_player_name()].stamina - 0.1
 					end
 					if runfast.meters.sprint then
 						player:hud_change(
@@ -217,6 +219,7 @@ minetest.register_globalstep(function(dtime)
 								runfast.players[player:get_player_name()].stamina
 							)
 						else
+							runfast.players[player:get_player_name()].stamina = 20
 							player:hud_change(
 								runfast.meters.players[player:get_player_name()].sprint,
 								"number",
@@ -317,6 +320,7 @@ minetest.register_on_item_eat(function(hp_change, replace_with_item, itemstack, 
 			user:set_hp(user:get_hp() + hp_change)
 		end
 	else
+		-- Poison
 		user:get_inventory():set_list("stomach", {})
 		if runfast.players[user:get_player_name()].satiation > math.abs(hp_change) then
 			runfast.players[user:get_player_name()].satiation = runfast.players[user:get_player_name()].satiation + hp_change
