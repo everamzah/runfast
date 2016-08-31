@@ -85,13 +85,14 @@ minetest.register_on_joinplayer(function(player)
 	player:get_inventory():set_list("stomach", {})
 	runfast.players[player:get_player_name()] = {
 		sprinting = false,
-		stamina = 1,
+		stamina = 20,
 	}
+	runfast.meters.players[player:get_player_name()] = {hunger = -1, sprint = -1}
 	if runfast.meters.hunger then
-		runfast.meters.players[player:get_player_name()] = player:hud_add(runfast.meters.def.hunger)
+		runfast.meters.players[player:get_player_name()].hunger = player:hud_add(runfast.meters.def.hunger)
 	end
 	if runfast.meters.sprint then
-		runfast.meters.players[player:get_player_name()] = player:hud_add(runfast.meters.def.sprint)
+		runfast.meters.players[player:get_player_name()].sprint = player:hud_add(runfast.meters.def.sprint)
 	end
 end)
 
@@ -111,11 +112,17 @@ minetest.register_globalstep(function(dtime)
 			hunger_timer = hunger_timer + dtime
 			if hunger_timer > runfast.time.hunger then
 				if player:get_inventory():is_empty("stomach") then
-					minetest.chat_send_player(player:get_player_name(), "Your stomach is empty.")
 					runfast.players[player:get_player_name()].stamina = 0
+					if runfast.meters.hunger then
+						player:hud_change(runfast.meters.players[player:get_player_name()].hunger, "number", 0)
+					end
+					minetest.chat_send_player(player:get_player_name(), "Your stomach is empty.")
 				else
+					runfast.players[player:get_player_name()].stamina = 20
+					if runfast.meters.hunger then
+						player:hud_change(runfast.meters.players[player:get_player_name()].hunger, "number", 20)
+					end
 					minetest.chat_send_player(player:get_player_name(), "You're sated.")
-					runfast.players[player:get_player_name()].stamina = 1
 				end
 				hunger_timer = 0
 			end
