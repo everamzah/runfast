@@ -316,6 +316,7 @@ minetest.register_on_item_eat(function(hp_change, replace_with_item, itemstack, 
 end)
 
 minetest.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack, pointed_thing)
+	if not placer then return end
 	if math.random(1, 3) ~= 3 then return end
 	if runfast.players[placer:get_player_name()].satiation >= 1.05 then
 		runfast.players[placer:get_player_name()].satiation = runfast.players[placer:get_player_name()].satiation - 0.05
@@ -325,6 +326,7 @@ minetest.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack
 end)
  
 minetest.register_on_dignode(function(pos, oldnode, digger)
+	if not digger then return end
 	if math.random(1, 2) ~= 2 then return end
 	if runfast.players[digger:get_player_name()].satiation >= 1.15 then
 		runfast.players[digger:get_player_name()].satiation = runfast.players[digger:get_player_name()].satiation - 0.15
