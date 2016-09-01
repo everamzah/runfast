@@ -166,10 +166,10 @@ minetest.register_globalstep(function(dtime)
 			for _, player in pairs(minetest.get_connected_players()) do
 				if runfast.players[player:get_player_name()].satiation > 1 then
 					runfast.players[player:get_player_name()].satiation = runfast.players[player:get_player_name()].satiation - 1
-					player:get_inventory():set_list("stomach", {})
-				else
+				elseif runfast.players[player:get_player_name()].satiation == 1 then
 					player:set_hp(player:get_hp() - 4)
 				end
+				player:get_inventory():set_list("stomach", {})
 			end
 			hunger_timer = 0
 		end
@@ -211,6 +211,9 @@ minetest.register_globalstep(function(dtime)
 							runfast.players[player:get_player_name()].stamina < 20 then
 						runfast.players[player:get_player_name()].stamina = runfast.players[player:get_player_name()].stamina + 1
 					end
+					if runfast.players[player:get_player_name()].stamina > 20 then
+						runfast.players[player:get_player_name()].stamina = 20
+					end
 					if runfast.meters.sprint then
 						if runfast.players[player:get_player_name()].stamina < 20 then
 							player:hud_change(
@@ -219,7 +222,6 @@ minetest.register_globalstep(function(dtime)
 								runfast.players[player:get_player_name()].stamina
 							)
 						else
-							runfast.players[player:get_player_name()].stamina = 20
 							player:hud_change(
 								runfast.meters.players[player:get_player_name()].sprint,
 								"number",
@@ -261,9 +263,9 @@ minetest.register_globalstep(function(dtime)
 		end
 		health_timer = health_timer + dtime
 		if health_timer > runfast.time.health then
+			-- Heart regeneration
 			if runfast.hp_regen then
 				for _, player in pairs(minetest.get_connected_players()) do
-					-- Heart regeneration
 					if runfast.players[player:get_player_name()].stamina == 20 and
 							runfast.players[player:get_player_name()].satiation == 20 and
 							player:get_hp() > 0 and player:get_hp() < 20 then
@@ -334,6 +336,14 @@ minetest.register_on_item_eat(function(hp_change, replace_with_item, itemstack, 
 
 	itemstack:take_item()
 	return itemstack
+end)
+
+minetest.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack, pointed_thing)
+	runfast.players[placer:get_player_name()].satiation = runfast.players[placer:get_player_name()].satiation - 0.1
+end)
+
+minetest.register_on_dignode(function(pos, oldnode, digger)
+	runfast.players[digger:get_player_name()].satiation = runfast.players[digger:get_player_name()].satiation - 0.1
 end)
 
 -- Parse edibles index
