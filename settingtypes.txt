@@ -23,4 +23,4 @@ runfast_hp_regen (Heart Regenation) bool false
 runfast_health_step (Heart Regen Interval) float 0.2
 
 # Debug stamina meter
-runfast_display_debug_meter (Debug stamina meter) bool false
+runfast_display_debug_meter (Debug Stamina Meter) bool false

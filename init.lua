@@ -28,18 +28,6 @@ runfast.time = {
 	health = tonumber(minetest.setting_get("runfast_health_step")) or 0.2,
 }
 
--- Edibles Index
-runfast.edibles = {
-	food = {
-		"default:apple",
-		"farming:bread",
-		"flowers:mushroom_brown",
-	},
-	poison = {
-		"flowers:mushroom_red",
-	}
-}
-
 -- Default sprinting speed and jump height
 runfast.sprint = {
 	speed = tonumber(minetest.setting_get("runfast_sprint_speed")) or 1.667,
@@ -105,29 +93,8 @@ if minetest.setting_getbool("runfast_display_debug_meter") then
 	}
 end
 
--- Register chat commands
-minetest.register_chatcommand("edibles", {
-	description = "List edibles, including poisons.",
-	params = "<food> <poison>",
-	func = function(name, param)
-		if param == "food" then
-			for _, v in pairs(runfast.edibles.food) do
-				minetest.chat_send_player(name, minetest.registered_items[v].description)
-			end
-		elseif param == "poison" then
-			for _, v in pairs(runfast.edibles.poison) do
-				minetest.chat_send_player(name, minetest.registered_items[v].description)
-			end
-		else
-			minetest.chat_send_player(name, "Invalid usage.  Type /help edibles.")
-		end
-	end,
-})
-
 -- Register callbacks
 minetest.register_on_joinplayer(function(player)
-	minetest.log("action", "Stomach size is " ..
-			tostring(player:get_inventory():get_size("stomach")))
 	player:get_inventory():set_size("stomach", 1)
 	runfast.players[player:get_player_name()] = {
 		sprinting = false,
@@ -188,7 +155,7 @@ minetest.register_globalstep(function(dtime)
 						player:set_physics_override(runfast.sprint)
 					end
 					if runfast.players[player:get_player_name()].stamina > 0 then
-						runfast.players[player:get_player_name()].stamina = runfast.players[player:get_player_name()].stamina - 0.1
+						runfast.players[player:get_player_name()].stamina = runfast.players[player:get_player_name()].stamina - 0.25
 					end
 					if runfast.meters.sprint then
 						player:hud_change(
@@ -324,8 +291,10 @@ minetest.register_on_item_eat(function(hp_change, replace_with_item, itemstack, 
 	else
 		-- Poison
 		user:get_inventory():set_list("stomach", {})
-		if runfast.players[user:get_player_name()].satiation > math.abs(hp_change) then
-			runfast.players[user:get_player_name()].satiation = runfast.players[user:get_player_name()].satiation + hp_change
+		if runfast.players[user:get_player_name()].satiation >= 1 then
+			runfast.players[user:get_player_name()].satiation = runfast.players[user:get_player_name()].satiation / 2
+		else
+			runfast.players[user:get_player_name()].satiation = 0
 		end
 		minetest.chat_send_player(user:get_player_name(),
 				"Yuck!  Ate " ..
@@ -353,15 +322,6 @@ minetest.register_on_dignode(function(pos, oldnode, digger)
 		runfast.players[digger:get_player_name()].satiation = 0
 	end
 end)
-
--- Parse edibles index
-for _, v in pairs(runfast.edibles.food) do
-	minetest.log("action", "[" .. runfast.name .. "] Adding " .. minetest.registered_items[v].description)
-end
-
-for _, v in pairs(runfast.edibles.poison) do
-	minetest.log("action", "[" .. runfast.name .. "] Adding " .. minetest.registered_items[v].description)
-end
 
 -- EOF
 minetest.log("action", "[" .. runfast.name .. "] Loaded.")
