@@ -112,16 +112,22 @@ minetest.register_on_joinplayer(function(player)
 end)
 
 minetest.register_on_leaveplayer(function(player)
+	if not player then return end
+	if not runfast.players[player:get_player_name()] then return end
 	runfast.players[player:get_player_name()] = nil
 	runfast.meters.players[player:get_player_name()] = nil
 end)
 
 minetest.register_on_dieplayer(function(player)
+	if not player then return end
+	if not runfast.players[player:get_player_name()] then return end
 	runfast.players[player:get_player_name()].satiation = 0
 	runfast.players[player:get_player_name()].stamina = 0
 end)
 
 minetest.register_on_respawnplayer(function(player)
+	if not player then return end
+	if not runfast.players[player:get_player_name()] then return end
 	runfast.players[player:get_player_name()].satiation = 20
 	runfast.players[player:get_player_name()].stamina = 20
 end)
@@ -317,7 +323,7 @@ end)
 
 minetest.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack, pointed_thing)
 	if not placer then return end
-	if math.random(1, 3) ~= 3 then return end
+	if math.random(1, 5) ~= 5 then return end
 	if runfast.players[placer:get_player_name()].satiation >= 1.05 then
 		runfast.players[placer:get_player_name()].satiation = runfast.players[placer:get_player_name()].satiation - 0.05
 	else
@@ -327,7 +333,7 @@ end)
  
 minetest.register_on_dignode(function(pos, oldnode, digger)
 	if not digger then return end
-	if math.random(1, 2) ~= 2 then return end
+	if math.random(1, 3) ~= 3 then return end
 	if runfast.players[digger:get_player_name()].satiation >= 1.15 then
 		runfast.players[digger:get_player_name()].satiation = runfast.players[digger:get_player_name()].satiation - 0.15
 	else
