@@ -166,7 +166,7 @@ minetest.register_globalstep(function(dtime)
 			for _, player in pairs(minetest.get_connected_players()) do
 				if runfast.players[player:get_player_name()].satiation > 1 then
 					runfast.players[player:get_player_name()].satiation = runfast.players[player:get_player_name()].satiation - 1
-				elseif runfast.players[player:get_player_name()].satiation == 1 then
+				elseif runfast.players[player:get_player_name()].satiation <= 1 then
 					player:set_hp(player:get_hp() - 4)
 				end
 				player:get_inventory():set_list("stomach", {})
@@ -307,7 +307,7 @@ minetest.register_on_item_eat(function(hp_change, replace_with_item, itemstack, 
 	if hp_change > 0 then
 		user:get_inventory():add_item("stomach", itemstack)
 		if runfast.players[user:get_player_name()].satiation < 20 and
-				runfast.players[user:get_player_name()].satiation > 0 then
+				runfast.players[user:get_player_name()].satiation >= 0 then
 			if runfast.players[user:get_player_name()].satiation + hp_change > 20 then
 				runfast.players[user:get_player_name()].satiation = 20
 			else
@@ -339,11 +339,19 @@ minetest.register_on_item_eat(function(hp_change, replace_with_item, itemstack, 
 end)
 
 minetest.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack, pointed_thing)
-	runfast.players[placer:get_player_name()].satiation = runfast.players[placer:get_player_name()].satiation - 0.1
+	if runfast.players[placer:get_player_name()].satiation >= 1.05 then
+		runfast.players[placer:get_player_name()].satiation = runfast.players[placer:get_player_name()].satiation - 0.05
+	else
+		runfast.players[placer:get_player_name()].satiation = 0
+	end
 end)
-
+ 
 minetest.register_on_dignode(function(pos, oldnode, digger)
-	runfast.players[digger:get_player_name()].satiation = runfast.players[digger:get_player_name()].satiation - 0.1
+	if runfast.players[digger:get_player_name()].satiation >= 1.15 then
+		runfast.players[digger:get_player_name()].satiation = runfast.players[digger:get_player_name()].satiation - 0.15
+	else
+		runfast.players[digger:get_player_name()].satiation = 0
+	end
 end)
 
 -- Parse edibles index
