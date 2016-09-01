@@ -37,8 +37,8 @@ runfast.sprint = {
 -- Statbars
 runfast.meters = {
 	players = {},
-	hunger = true,
-	sprint = true,
+	hunger = minetest.setting_getbool("runfast_display_hunger_meter") or true,
+	sprint = minetest.setting_getbool("runfast_display_sprint_meter") or true,
 	debug = false,
 	def = {
 		hunger = {},
@@ -48,9 +48,8 @@ runfast.meters = {
 }
 
 -- Conditionally define statbars
-if minetest.setting_getbool("runfast_display_hunger_meter") then
+if runfast.meters.hunger then
 	minetest.log("action", "[" .. runfast.name .. "] Setting hunger meter.")
-	--runfast.meters.hunger = true
 	runfast.meters.def.hunger = {
 		hud_elem_type = "statbar",
 		position = {x = 0.5, y = 1},
@@ -61,13 +60,11 @@ if minetest.setting_getbool("runfast_display_hunger_meter") then
 		offset = {x = (-10 * 24) - 25, y = -(48 + 24 + 40)},
 	}
 else
-	runfast.meters.hunger = false
 	minetest.log("action", "[" .. runfast.name .. "] Not setting hunger meter.")
 end
 
-if minetest.setting_getbool("runfast_display_sprint_meter") then
+if runfast.meters.sprint then
 	minetest.log("action", "[" .. runfast.name .. "] Setting sprint meter.")
-	--runfast.meters.sprint = true
 	runfast.meters.def.sprint = {
 		hud_elem_type = "statbar",
 		position = {x = 0.5, y = 1},
@@ -78,7 +75,6 @@ if minetest.setting_getbool("runfast_display_sprint_meter") then
 		offset = {x = 25, y = -(48 + 24 + 40)},
 	}
 else
-	runfast.meters.sprint = false
 	minetest.log("action", "[" .. runfast.name .. "] Not setting sprint meter.")
 end
 
