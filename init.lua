@@ -247,8 +247,8 @@ minetest.register_globalstep(function(dtime)
 			-- Heart regeneration
 			if runfast.hp_regen then
 				for _, player in pairs(minetest.get_connected_players()) do
-					if runfast.players[player:get_player_name()].stamina == 20 and
-							runfast.players[player:get_player_name()].satiation == 20 and
+					if runfast.players[player:get_player_name()].stamina >= 10 and
+							runfast.players[player:get_player_name()].satiation >= 15 and
 							player:get_hp() > 0 and player:get_hp() < 20 then
 						player:set_hp(player:get_hp() + 1)
 					end
