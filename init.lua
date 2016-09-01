@@ -116,6 +116,16 @@ minetest.register_on_leaveplayer(function(player)
 	runfast.meters.players[player:get_player_name()] = nil
 end)
 
+minetest.register_on_dieplayer(function(player)
+	runfast.players[player:get_player_name()].satiation = 0
+	runfast.players[player:get_player_name()].stamina = 0
+end)
+
+minetest.register_on_respawnplayer(function(player)
+	runfast.players[player:get_player_name()].satiation = 20
+	runfast.players[player:get_player_name()].stamina = 20
+end)
+
 -- Initialize counter variables
 local poll_timer = 0
 local hunger_timer = 0
