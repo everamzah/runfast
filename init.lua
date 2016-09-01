@@ -204,17 +204,17 @@ minetest.register_globalstep(function(dtime)
 					)
 				end
 				if runfast.meters.sprint then
-					if runfast.players[player:get_player_name()].stamina ~= 20 then
-						player:hud_change(
-							runfast.meters.players[player:get_player_name()].sprint,
-							"number",
-							runfast.players[player:get_player_name()].stamina
-						)
-					elseif runfast.players[player:get_player_name()].stamina == 20 then
+					if runfast.players[player:get_player_name()].stamina == 20 then
 						player:hud_change(
 							runfast.meters.players[player:get_player_name()].sprint,
 							"number",
 							0
+						)
+					else
+						player:hud_change(
+							runfast.meters.players[player:get_player_name()].sprint,
+							"number",
+							runfast.players[player:get_player_name()].stamina
 						)
 					end
 				end
