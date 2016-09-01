@@ -274,13 +274,11 @@ end)
 minetest.register_on_item_eat(function(hp_change, replace_with_item, itemstack, user, pointed_thing)
 	if runfast.hp_regen then
 		if runfast.players[user:get_player_name()].satiation == 20 then
-			minetest.chat_send_player(user:get_player_name(), "You're not very hungry.")
 			return itemstack
 		end
 	else
 		if runfast.players[user:get_player_name()].satiation == 20 and
 				user:get_hp() == 20 then
-			minetest.chat_send_player(user:get_player_name(), "You're not very hungry.")
 			return itemstack
 		end
 	end
@@ -295,10 +293,6 @@ minetest.register_on_item_eat(function(hp_change, replace_with_item, itemstack, 
 				runfast.players[user:get_player_name()].satiation = runfast.players[user:get_player_name()].satiation + hp_change
 			end
 		end
-		minetest.chat_send_player(user:get_player_name(),
-				"Yum!  Ate " ..
-						minetest.registered_items[itemstack:get_name()].description ..
-						" +" .. tostring(hp_change))
 		if not runfast.hp_regen then
 			user:set_hp(user:get_hp() + hp_change)
 		end
@@ -310,10 +304,6 @@ minetest.register_on_item_eat(function(hp_change, replace_with_item, itemstack, 
 		else
 			runfast.players[user:get_player_name()].satiation = 0
 		end
-		minetest.chat_send_player(user:get_player_name(),
-				"Yuck!  Ate " ..
-						minetest.registered_items[itemstack:get_name()].description ..
-						" " .. tostring(hp_change))
 		user:set_hp(user:get_hp() + hp_change)
 	end
 
