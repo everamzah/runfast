@@ -1,8 +1,8 @@
 # Set to display hunger meter
-runfast_display_hunger_meter (Hunger Meter) bool false
+runfast_display_hunger_meter (Hunger Meter) bool true
 
 # Set to display sprint meter
-runfast_display_sprint_meter (Sprint Meter) bool false
+runfast_display_sprint_meter (Sprint Meter) bool true
 
 # Time between hunger checks
 runfast_hunger_step (Hunger Tick) float 15.0
@@ -17,7 +17,7 @@ runfast_sprint_jump (Sprinting Jump Height) float 1.334
 runfast_meter_step (HUD Update Interval) float 0.1
 
 # Enable heart regeneration
-runfast_hp_regen (Heart Regenation) bool false
+runfast_hp_regen (Heart Regenation) bool true
 
 # Time between health updates
 runfast_health_step (Heart Regen Interval) float 0.2

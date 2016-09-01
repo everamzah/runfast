@@ -15,7 +15,7 @@ minetest.log("action", "[" .. runfast.name .. "] Loading.")
 minetest.log("action", "[" .. runfast.name .. "] " .. runfast.path)
 
 -- Heart regeneration
-runfast.hp_regen = minetest.setting_getbool("runfast_hp_regen") or false
+runfast.hp_regen = minetest.setting_getbool("runfast_hp_regen") or true
 minetest.log("action", "[" .. runfast.name .. "] Heart regeneration: " ..
 		tostring(runfast.hp_regen))
 
@@ -37,8 +37,8 @@ runfast.sprint = {
 -- Statbars
 runfast.meters = {
 	players = {},
-	hunger = false,
-	sprint = false,
+	hunger = true,
+	sprint = true,
 	debug = false,
 	def = {
 		hunger = {},
@@ -50,7 +50,7 @@ runfast.meters = {
 -- Conditionally define statbars
 if minetest.setting_getbool("runfast_display_hunger_meter") then
 	minetest.log("action", "[" .. runfast.name .. "] Setting hunger meter.")
-	runfast.meters.hunger = true
+	--runfast.meters.hunger = true
 	runfast.meters.def.hunger = {
 		hud_elem_type = "statbar",
 		position = {x = 0.5, y = 1},
@@ -61,12 +61,13 @@ if minetest.setting_getbool("runfast_display_hunger_meter") then
 		offset = {x = (-10 * 24) - 25, y = -(48 + 24 + 40)},
 	}
 else
+	runfast.meters.hunger = false
 	minetest.log("action", "[" .. runfast.name .. "] Not setting hunger meter.")
 end
 
 if minetest.setting_getbool("runfast_display_sprint_meter") then
 	minetest.log("action", "[" .. runfast.name .. "] Setting sprint meter.")
-	runfast.meters.sprint = true
+	--runfast.meters.sprint = true
 	runfast.meters.def.sprint = {
 		hud_elem_type = "statbar",
 		position = {x = 0.5, y = 1},
@@ -77,6 +78,7 @@ if minetest.setting_getbool("runfast_display_sprint_meter") then
 		offset = {x = 25, y = -(48 + 24 + 40)},
 	}
 else
+	runfast.meters.sprint = false
 	minetest.log("action", "[" .. runfast.name .. "] Not setting sprint meter.")
 end
 
@@ -308,6 +310,7 @@ minetest.register_on_item_eat(function(hp_change, replace_with_item, itemstack, 
 end)
 
 minetest.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack, pointed_thing)
+	if math.random(1, 3) ~= 3 then return end
 	if runfast.players[placer:get_player_name()].satiation >= 1.05 then
 		runfast.players[placer:get_player_name()].satiation = runfast.players[placer:get_player_name()].satiation - 0.05
 	else
@@ -316,6 +319,7 @@ minetest.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack
 end)
  
 minetest.register_on_dignode(function(pos, oldnode, digger)
+	if math.random(1, 2) ~= 2 then return end
 	if runfast.players[digger:get_player_name()].satiation >= 1.15 then
 		runfast.players[digger:get_player_name()].satiation = runfast.players[digger:get_player_name()].satiation - 0.15
 	else
