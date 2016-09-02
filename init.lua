@@ -93,11 +93,12 @@ end
 
 -- Register callbacks
 minetest.register_on_newplayer(function(player)
+	player:get_inventory():set_size("stomach", 1)
 	player:get_inventory():set_width("stomach", 20)
 end)
 
 minetest.register_on_joinplayer(function(player)
-	player:get_inventory():set_size("stomach", 1)
+	--player:get_inventory():set_size("stomach", 1)
 	runfast.players[player:get_player_name()] = {
 		sprinting = false,
 		stamina = 20,
