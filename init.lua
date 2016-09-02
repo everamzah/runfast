@@ -302,7 +302,7 @@ minetest.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack
 	else
 		runfast.players[placer:get_player_name()].satiation = 0
 	end
-	placer:get_inventory():set_width("stomach", runfast.players[digger:get_player_name()].satiation)
+	placer:get_inventory():set_width("stomach", runfast.players[placer:get_player_name()].satiation)
 end)
  
 minetest.register_on_dignode(function(pos, oldnode, digger)
