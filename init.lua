@@ -14,12 +14,15 @@ runfast.path = minetest.get_modpath(runfast.name)
 minetest.log("action", "[" .. runfast.name .. "] Loading.")
 minetest.log("action", "[" .. runfast.name .. "] " .. runfast.path)
 
--- Heart regeneration
-runfast.hp_regen = minetest.setting_getbool("runfast_hp_regen") or true
+-- Heart regeneration, default on
+runfast.hp_regen = minetest.setting_getbool("runfast_hp_regen")
+if runfast.hp_regen == nil then
+	runfast.hp_regen = true
+end
 minetest.log("action", "[" .. runfast.name .. "] Heart regeneration: " ..
 		tostring(runfast.hp_regen))
 
--- Master poll intervals
+-- Master poll default intervals
 runfast.time = {
 	poll = tonumber(minetest.setting_get("dedicated_server_step")) or 0.1,
 	hunger = tonumber(minetest.setting_get("runfast_hunger_step")) or 15.0,
@@ -37,8 +40,8 @@ runfast.sprint = {
 -- Statbars
 runfast.meters = {
 	players = {},
-	hunger = minetest.setting_getbool("runfast_display_hunger_meter") or true,
-	sprint = minetest.setting_getbool("runfast_display_sprint_meter") or true,
+	hunger = minetest.setting_getbool("runfast_display_hunger_meter"),
+	sprint = minetest.setting_getbool("runfast_display_sprint_meter"),
 	debug = false,
 	def = {
 		hunger = {},
@@ -46,6 +49,15 @@ runfast.meters = {
 		debug = {},
 	},
 }
+
+-- Hunger & Sprint meters are on by default.
+if runfast.meters.hunger == nil then
+	runfast.meters.hunger = true
+end
+
+if runfast.meters.sprint == nil then
+	runfast.meters.sprint = true
+end
 
 -- Conditionally define statbars
 if runfast.meters.hunger then
@@ -78,7 +90,7 @@ else
 	minetest.log("action", "[" .. runfast.name .. "] Not setting sprint meter.")
 end
 
-if minetest.setting_getbool("runfast_display_debug_meter") then
+if minetest.is_yes(minetest.setting_getbool("runfast_display_debug_meter")) then
 	runfast.meters.debug = true
 	runfast.meters.def.debug = {
 		hud_elem_type = "text",
@@ -87,7 +99,7 @@ if minetest.setting_getbool("runfast_display_debug_meter") then
 		position = {x = 0, y = 0},
 		offset = {x = 136, y = 264},
 		alignment = 1, -- ????
-		text = "Stamina: ?\nSatiation: ?\nStomach: ?",
+		text = "Stamina: ?\nSatiation: ?\nStomach: ?\nSprinting: ?\nHP Regen: ?",
 	}
 end
 
@@ -193,9 +205,11 @@ minetest.register_globalstep(function(dtime)
 							not player:get_player_control().jump and
 							runfast.players[player:get_player_name()].stamina < 20 and
 							player:get_hp() > 0 then
-						runfast.players[player:get_player_name()].stamina = runfast.players[player:get_player_name()].stamina + 1
-					end
-					if runfast.players[player:get_player_name()].stamina > 20 then
+						runfast.players[player:get_player_name()].stamina = runfast.players[player:get_player_name()].stamina + 1 
+					elseif runfast.players[player:get_player_name()].stamina < 20 and
+							player:get_hp() > 0 then
+						runfast.players[player:get_player_name()].stamina = runfast.players[player:get_player_name()].stamina + 0.1
+					elseif player:get_hp() > 0 then
 						runfast.players[player:get_player_name()].stamina = 20
 					end
 				end
@@ -205,6 +219,7 @@ minetest.register_globalstep(function(dtime)
 		meter_timer = meter_timer + dtime
 		if meter_timer > runfast.time.meter then
 			for _, player in pairs(minetest.get_connected_players()) do
+				-- Update hunger and sprint meters.
 				if runfast.meters.hunger then
 					player:hud_change(
 						runfast.meters.players[player:get_player_name()].hunger,
@@ -246,6 +261,7 @@ minetest.register_globalstep(function(dtime)
 		end
 		if runfast.meters.debug then
 			for _, player in pairs(minetest.get_connected_players()) do
+				-- Display debugging information.
 				player:hud_change(
 					runfast.meters.players[player:get_player_name()].debug,
 					"text",
@@ -253,7 +269,11 @@ minetest.register_globalstep(function(dtime)
 							"Satiation: " ..
 							tostring(runfast.players[player:get_player_name()].satiation) .. "\n" ..
 							"Stomach: " ..
-							tostring(player:get_inventory():get_width("stomach"))
+							tostring(player:get_inventory():get_width("stomach")) .."\n" ..
+							"Sprinting: " ..
+							tostring(runfast.players[player:get_player_name()].sprinting) .. "\n" ..
+							"HP Regen: " ..
+							tostring(runfast.hp_regen)
 				)
 			end
 		end
@@ -262,18 +282,16 @@ minetest.register_globalstep(function(dtime)
 end)
 
 minetest.register_on_item_eat(function(hp_change, replace_with_item, itemstack, user, pointed_thing)
-	if runfast.hp_regen then
-		if runfast.players[user:get_player_name()].satiation == 20 then
+	-- Only consume edible if hungry, or optionally hurt, depending on HP Regen setting.
+	if runfast.hp_regen and runfast.players[user:get_player_name()].satiation == 20 then
 			return itemstack
-		end
-	else
-		if runfast.players[user:get_player_name()].satiation == 20 and
-				user:get_hp() == 20 then
-			return itemstack
-		end
+	elseif runfast.players[user:get_player_name()].satiation == 20 and
+			user:get_hp() == 20 then
+		return itemstack
 	end
 
 	if hp_change > 0 then
+		-- Consumed food
 		if runfast.players[user:get_player_name()].satiation < 20 and
 				runfast.players[user:get_player_name()].satiation >= 0 then
 			if runfast.players[user:get_player_name()].satiation + hp_change > 20 then
@@ -286,7 +304,7 @@ minetest.register_on_item_eat(function(hp_change, replace_with_item, itemstack, 
 			user:set_hp(user:get_hp() + hp_change)
 		end
 	else
-		-- Poison
+		-- Consumed poison
 		if runfast.players[user:get_player_name()].satiation >= 1 then
 			runfast.players[user:get_player_name()].satiation = runfast.players[user:get_player_name()].satiation / 2
 		else
@@ -299,6 +317,7 @@ minetest.register_on_item_eat(function(hp_change, replace_with_item, itemstack, 
 	return itemstack
 end)
 
+-- 20% chance placing reduces satiation by 0.05
 minetest.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack, pointed_thing)
 	if not placer then return end
 	if math.random(1, 5) ~= 5 then return end
@@ -310,6 +329,7 @@ minetest.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack
 	placer:get_inventory():set_width("stomach", runfast.players[placer:get_player_name()].satiation)
 end)
  
+-- 33% chance digging reduces satiation by 0.15
 minetest.register_on_dignode(function(pos, oldnode, digger)
 	if not digger then return end
 	if math.random(1, 3) ~= 3 then return end
