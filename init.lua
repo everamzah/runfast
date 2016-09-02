@@ -98,7 +98,6 @@ minetest.register_on_newplayer(function(player)
 end)
 
 minetest.register_on_joinplayer(function(player)
-	--player:get_inventory():set_size("stomach", 1)
 	runfast.players[player:get_player_name()] = {
 		sprinting = false,
 		stamina = 20,
@@ -179,7 +178,7 @@ minetest.register_globalstep(function(dtime)
 						player:set_physics_override(runfast.sprint)
 					end
 					if runfast.players[player:get_player_name()].stamina > 0 then
-						runfast.players[player:get_player_name()].stamina = runfast.players[player:get_player_name()].stamina - 0.25
+						runfast.players[player:get_player_name()].stamina = runfast.players[player:get_player_name()].stamina - ((20 - runfast.players[player:get_player_name()].satiation) * 0.05)
 					end
 				else
 					if runfast.players[player:get_player_name()].sprinting then
