@@ -20,7 +20,7 @@ runfast_meter_step (HUD Update Interval) float 0.1
 runfast_hp_regen (Heart Regenation) bool true
 
 # Time between health updates
-runfast_health_step (Heart Regen Interval) float 0.2
+runfast_health_step (Heart Regen Interval) float 1
 
 # Debug stamina meter
 runfast_display_debug_meter (Debug Stamina Meter) bool false

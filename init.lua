@@ -25,7 +25,7 @@ runfast.time = {
 	hunger = tonumber(minetest.setting_get("runfast_hunger_step")) or 15.0,
 	sprint = tonumber(minetest.setting_get("dedicated_server_step")) or 0.1,
 	meter = tonumber(minetest.setting_get("runfast_meter_step")) or 0.1,
-	health = tonumber(minetest.setting_get("runfast_health_step")) or 0.2,
+	health = tonumber(minetest.setting_get("runfast_health_step")) or 1,
 }
 
 -- Default sprinting speed and jump height
@@ -152,7 +152,8 @@ minetest.register_globalstep(function(dtime)
 					runfast.players[player:get_player_name()].satiation = runfast.players[player:get_player_name()].satiation - 1
 					player:get_inventory():set_width("stomach", runfast.players[player:get_player_name()].satiation)
 				end
-				if runfast.players[player:get_player_name()].satiation <= 2 then
+				if runfast.players[player:get_player_name()].satiation <= 2 and
+						player:get_hp() > 0 then
 					player:set_hp(player:get_hp() - 3)
 				end
 			end
@@ -187,7 +188,8 @@ minetest.register_globalstep(function(dtime)
 							not player:get_player_control().left and
 							not player:get_player_control().right and
 							not player:get_player_control().jump and
-							runfast.players[player:get_player_name()].stamina < 20 then
+							runfast.players[player:get_player_name()].stamina < 20 and
+							player:get_hp() > 0 then
 						runfast.players[player:get_player_name()].stamina = runfast.players[player:get_player_name()].stamina + 1
 					end
 					if runfast.players[player:get_player_name()].stamina > 20 then
@@ -233,7 +235,7 @@ minetest.register_globalstep(function(dtime)
 					if runfast.players[player:get_player_name()].stamina >= 10 and
 							runfast.players[player:get_player_name()].satiation >= 15 and
 							player:get_hp() > 0 and player:get_hp() < 20 then
-						player:set_hp(player:get_hp() + 1)
+						player:set_hp(player:get_hp() + 2)
 					end
 				end
 			end
