@@ -87,17 +87,20 @@ if minetest.setting_getbool("runfast_display_debug_meter") then
 		position = {x = 0, y = 0},
 		offset = {x = 136, y = 264},
 		alignment = 1, -- ????
-		text = "Stamina: ? / Satiation: / ?",
+		text = "Stamina: ?\nSatiation: ?\nStomach: ?",
 	}
 end
 
 -- Register callbacks
 minetest.register_on_joinplayer(function(player)
 	player:get_inventory():set_size("stomach", 1)
+	if player:get_inventory():get_width("stomach") == 0 then
+		player:get_inventory():set_width("stomach", 20)
+	end
 	runfast.players[player:get_player_name()] = {
 		sprinting = false,
 		stamina = 20,
-		satiation = 20,
+		satiation = player:get_inventory():get_width("stomach"),
 	}
 	runfast.meters.players[player:get_player_name()] = {hunger = -1, sprint = -1, debug = -1}
 	if runfast.meters.hunger then
@@ -147,6 +150,7 @@ minetest.register_globalstep(function(dtime)
 			for _, player in pairs(minetest.get_connected_players()) do
 				if runfast.players[player:get_player_name()].satiation >= 1 then
 					runfast.players[player:get_player_name()].satiation = runfast.players[player:get_player_name()].satiation - 1
+					player:get_inventory():set_width("stomach", runfast.players[player:get_player_name()].satiation)
 				end
 				if runfast.players[player:get_player_name()].satiation <= 2 then
 					player:set_hp(player:get_hp() - 3)
@@ -241,9 +245,11 @@ minetest.register_globalstep(function(dtime)
 				player:hud_change(
 					runfast.meters.players[player:get_player_name()].debug,
 					"text",
-					"Stamina: " .. tostring(runfast.players[player:get_player_name()].stamina) ..
-							" / Satiation: " ..
-							tostring(runfast.players[player:get_player_name()].satiation)
+					"Stamina: " .. tostring(runfast.players[player:get_player_name()].stamina) .. "\n" ..
+							"Satiation: " ..
+							tostring(runfast.players[player:get_player_name()].satiation) .. "\n" ..
+							"Stomach: " ..
+							tostring(player:get_inventory():get_width("stomach"))
 				)
 			end
 		end
@@ -286,7 +292,7 @@ minetest.register_on_item_eat(function(hp_change, replace_with_item, itemstack, 
 		end
 		user:set_hp(user:get_hp() + hp_change)
 	end
-
+	user:get_inventory():set_width("stomach", runfast.players[user:get_player_name()].satiation)
 	itemstack:take_item()
 	return itemstack
 end)
@@ -299,6 +305,7 @@ minetest.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack
 	else
 		runfast.players[placer:get_player_name()].satiation = 0
 	end
+	digger:get_inventory():set_width("stomach", runfast.players[digger:get_player_name()].satiation)
 end)
  
 minetest.register_on_dignode(function(pos, oldnode, digger)
@@ -309,6 +316,7 @@ minetest.register_on_dignode(function(pos, oldnode, digger)
 	else
 		runfast.players[digger:get_player_name()].satiation = 0
 	end
+	digger:get_inventory():set_width("stomach", runfast.players[digger:get_player_name()].satiation)
 end)
 
 -- EOF
