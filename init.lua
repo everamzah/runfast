@@ -147,7 +147,8 @@ minetest.register_globalstep(function(dtime)
 			for _, player in pairs(minetest.get_connected_players()) do
 				if runfast.players[player:get_player_name()].satiation >= 1 then
 					runfast.players[player:get_player_name()].satiation = runfast.players[player:get_player_name()].satiation - 1
-				elseif runfast.players[player:get_player_name()].satiation <= 2 then
+				end
+				if runfast.players[player:get_player_name()].satiation <= 2 then
 					player:set_hp(player:get_hp() - 3)
 				end
 				player:get_inventory():set_list("stomach", {})
