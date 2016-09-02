@@ -92,11 +92,12 @@ if minetest.setting_getbool("runfast_display_debug_meter") then
 end
 
 -- Register callbacks
+minetest.register_on_newplayer(function(player)
+	player:get_inventory():set_width("stomach", 20)
+end)
+
 minetest.register_on_joinplayer(function(player)
 	player:get_inventory():set_size("stomach", 1)
-	if player:get_inventory():get_width("stomach") == 0 then
-		player:get_inventory():set_width("stomach", 20)
-	end
 	runfast.players[player:get_player_name()] = {
 		sprinting = false,
 		stamina = 20,
