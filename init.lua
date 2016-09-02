@@ -126,6 +126,7 @@ minetest.register_on_dieplayer(function(player)
 	if not runfast.players[player:get_player_name()] then return end
 	runfast.players[player:get_player_name()].satiation = 0
 	runfast.players[player:get_player_name()].stamina = 0
+	player:get_inventory():set_width("stomach", 0)
 end)
 
 minetest.register_on_respawnplayer(function(player)
@@ -133,6 +134,7 @@ minetest.register_on_respawnplayer(function(player)
 	if not runfast.players[player:get_player_name()] then return end
 	runfast.players[player:get_player_name()].satiation = 20
 	runfast.players[player:get_player_name()].stamina = 20
+	player:get_inventory():set_width("stomach", 20)
 end)
 
 -- Initialize counter variables
