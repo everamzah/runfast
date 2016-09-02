@@ -155,7 +155,6 @@ minetest.register_globalstep(function(dtime)
 				if runfast.players[player:get_player_name()].satiation <= 2 then
 					player:set_hp(player:get_hp() - 3)
 				end
-				player:get_inventory():set_list("stomach", {})
 			end
 			hunger_timer = 0
 		end
@@ -270,7 +269,6 @@ minetest.register_on_item_eat(function(hp_change, replace_with_item, itemstack, 
 	end
 
 	if hp_change > 0 then
-		user:get_inventory():add_item("stomach", itemstack)
 		if runfast.players[user:get_player_name()].satiation < 20 and
 				runfast.players[user:get_player_name()].satiation >= 0 then
 			if runfast.players[user:get_player_name()].satiation + hp_change > 20 then
@@ -284,7 +282,6 @@ minetest.register_on_item_eat(function(hp_change, replace_with_item, itemstack, 
 		end
 	else
 		-- Poison
-		user:get_inventory():set_list("stomach", {})
 		if runfast.players[user:get_player_name()].satiation >= 1 then
 			runfast.players[user:get_player_name()].satiation = runfast.players[user:get_player_name()].satiation / 2
 		else
@@ -305,7 +302,7 @@ minetest.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack
 	else
 		runfast.players[placer:get_player_name()].satiation = 0
 	end
-	digger:get_inventory():set_width("stomach", runfast.players[digger:get_player_name()].satiation)
+	placer:get_inventory():set_width("stomach", runfast.players[digger:get_player_name()].satiation)
 end)
  
 minetest.register_on_dignode(function(pos, oldnode, digger)
