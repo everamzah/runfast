@@ -185,7 +185,8 @@ minetest.register_globalstep(function(dtime)
 						player:get_player_control().right or
 						player:get_player_control().jump) and
 						runfast.players[player:get_player_name()].satiation >= 2 then
-					if not runfast.players[player:get_player_name()].sprinting then
+					if not runfast.players[player:get_player_name()].sprinting and
+							runfast.players[player:get_player_name()].stamina > 1 then
 						runfast.players[player:get_player_name()].sprinting = true
 						player:set_physics_override(runfast.sprint)
 					end
