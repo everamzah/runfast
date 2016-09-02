@@ -167,9 +167,9 @@ minetest.register_globalstep(function(dtime)
 					runfast.players[player:get_player_name()].satiation = runfast.players[player:get_player_name()].satiation - 1
 					player:get_inventory():set_width("stomach", runfast.players[player:get_player_name()].satiation)
 				end
-				if runfast.players[player:get_player_name()].satiation <= 2 and
+				if runfast.players[player:get_player_name()].satiation < 1 and
 						player:get_hp() > 0 then
-					player:set_hp(player:get_hp() - 3)
+					player:set_hp(player:get_hp() - 2)
 				end
 			end
 			hunger_timer = 0
@@ -178,7 +178,7 @@ minetest.register_globalstep(function(dtime)
 		if sprint_timer > runfast.time.sprint then
 			for _, player in pairs(minetest.get_connected_players()) do
 				if player:get_player_control().aux1 and
-						runfast.players[player:get_player_name()].stamina ~= 0 and
+						runfast.players[player:get_player_name()].stamina > 0 and
 						(player:get_player_control().up or
 						player:get_player_control().down or
 						player:get_player_control().left or
@@ -189,9 +189,7 @@ minetest.register_globalstep(function(dtime)
 						runfast.players[player:get_player_name()].sprinting = true
 						player:set_physics_override(runfast.sprint)
 					end
-					if runfast.players[player:get_player_name()].stamina > 0 then
-						runfast.players[player:get_player_name()].stamina = runfast.players[player:get_player_name()].stamina - ((20 - runfast.players[player:get_player_name()].satiation) * 0.05)
-					end
+					runfast.players[player:get_player_name()].stamina = runfast.players[player:get_player_name()].stamina - ((20 - runfast.players[player:get_player_name()].satiation) * 0.05)
 				else
 					if runfast.players[player:get_player_name()].sprinting then
 						runfast.players[player:get_player_name()].sprinting = false
