@@ -164,10 +164,11 @@ minetest.register_globalstep(function(dtime)
 		if hunger_timer > runfast.time.hunger then
 			for _, player in pairs(minetest.get_connected_players()) do
 				if runfast.players[player:get_player_name()].satiation >= 1 then
+					-- Lower satiation more or less depending on whether sprinting.
 					if runfast.players[player:get_player_name()].sprinting then
-						runfast.players[player:get_player_name()].satiation = runfast.players[player:get_player_name()].satiation - 2
+						runfast.players[player:get_player_name()].satiation = runfast.players[player:get_player_name()].satiation - 0.5
 					else
-						runfast.players[player:get_player_name()].satiation = runfast.players[player:get_player_name()].satiation - 1
+						runfast.players[player:get_player_name()].satiation = runfast.players[player:get_player_name()].satiation - 0.25
 					end
 					player:get_inventory():set_width("stomach", runfast.players[player:get_player_name()].satiation)
 				end
@@ -189,12 +190,15 @@ minetest.register_globalstep(function(dtime)
 						player:get_player_control().right or
 						player:get_player_control().jump) and
 						runfast.players[player:get_player_name()].satiation >= 2 then
+					-- Sprinting now.
 					if not runfast.players[player:get_player_name()].sprinting and
 							runfast.players[player:get_player_name()].stamina > 1 then
 						runfast.players[player:get_player_name()].sprinting = true
 						player:set_physics_override(runfast.sprint)
 					end
+					-- Reduce stamina points based upon number of satiation points.
 					runfast.players[player:get_player_name()].stamina = runfast.players[player:get_player_name()].stamina - ((20 - runfast.players[player:get_player_name()].satiation) * 0.05)
+					-- Reduce satiation ever so slightly, so that a 20 stamina will lower.
 					runfast.players[player:get_player_name()].satiation = runfast.players[player:get_player_name()].satiation - 0.01
 				else
 					if runfast.players[player:get_player_name()].sprinting then
@@ -338,7 +342,7 @@ minetest.register_on_dignode(function(pos, oldnode, digger)
 	if not digger then return end
 	if math.random(1, 3) ~= 3 then return end
 	if runfast.players[digger:get_player_name()].satiation >= 1.15 then
-		runfast.players[digger:get_player_name()].satiation = runfast.players[digger:get_player_name()].satiation - 0.15
+		runfast.players[digger:get_player_name()].satiation = runfast.players[digger:get_player_name()].satiation - 0.1
 	else
 		runfast.players[digger:get_player_name()].satiation = 0
 	end
