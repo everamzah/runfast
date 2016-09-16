@@ -6,10 +6,12 @@
 
 -- Mod Space
 local runfast = {}
-runfast.players = {}
 
+runfast.players = {}
 runfast.name = minetest.get_current_modname()
 runfast.path = minetest.get_modpath(runfast.name)
+runfast.damage = minetest.setting_getbool("enable_damage")
+runfast.singleplayer = minetest.is_singleplayer()
 
 minetest.log("action", "[" .. runfast.name .. "] Loading.")
 minetest.log("action", "[" .. runfast.name .. "] " .. runfast.path)
@@ -62,6 +64,10 @@ end
 -- Conditionally define statbars
 if runfast.meters.hunger then
 	minetest.log("action", "[" .. runfast.name .. "] Setting hunger meter.")
+	local offset = {x = (-10 * 24) - 25, y = -(48 + 24 + 40)}
+	if not runfast.damage then
+		offset.y = -(48 + 24 + 16)
+	end
 	runfast.meters.def.hunger = {
 		hud_elem_type = "statbar",
 		position = {x = 0.5, y = 1},
@@ -69,7 +75,7 @@ if runfast.meters.hunger then
 		number = 20,
 		direction = 0,
 		size = {x = 24, y = 24},
-		offset = {x = (-10 * 24) - 25, y = -(48 + 24 + 40)},
+		offset = offset,
 	}
 else
 	minetest.log("action", "[" .. runfast.name .. "] Not setting hunger meter.")
@@ -77,6 +83,10 @@ end
 
 if runfast.meters.sprint then
 	minetest.log("action", "[" .. runfast.name .. "] Setting sprint meter.")
+	local offset = {x = 25, y = -(48 + 24 + 40)}
+	if not runfast.damage then
+		offset.y = -(48 + 24 + 16)
+	end
 	runfast.meters.def.sprint = {
 		hud_elem_type = "statbar",
 		position = {x = 0.5, y = 1},
@@ -84,7 +94,7 @@ if runfast.meters.sprint then
 		number = 0,
 		direction = 0,
 		size = {x = 24, y = 24},
-		offset = {x = 25, y = -(48 + 24 + 40)},
+		offset = offset,
 	}
 else
 	minetest.log("action", "[" .. runfast.name .. "] Not setting sprint meter.")
@@ -110,6 +120,9 @@ minetest.register_on_newplayer(function(player)
 end)
 
 minetest.register_on_joinplayer(function(player)
+	if runfast.singleplayer then
+		minetest.chat_send_player(player:get_player_name(), "The runfast mod doesn't work properly in singleplayer mode.")
+	end
 	runfast.players[player:get_player_name()] = {
 		sprinting = false,
 		stamina = 20,
@@ -128,27 +141,40 @@ minetest.register_on_joinplayer(function(player)
 end)
 
 minetest.register_on_leaveplayer(function(player)
-	if not player then return end
-	if not runfast.players[player:get_player_name()] then return end
+	if not player then
+		return
+	end
+	if not runfast.players[player:get_player_name()] then
+		return
+	end
 	runfast.players[player:get_player_name()] = nil
 	runfast.meters.players[player:get_player_name()] = nil
 end)
 
 minetest.register_on_dieplayer(function(player)
-	if not player then return end
-	if not runfast.players[player:get_player_name()] then return end
+	if not player then
+		return
+	end
+	if not runfast.players[player:get_player_name()] then
+		return
+	end
 	runfast.players[player:get_player_name()].satiation = 0
 	runfast.players[player:get_player_name()].stamina = 0
 	player:get_inventory():set_width("stomach", 0)
 end)
 
 minetest.register_on_respawnplayer(function(player)
-	if not player then return end
-	if not runfast.players[player:get_player_name()] then return end
+	if not player then
+		return
+	end
+	if not runfast.players[player:get_player_name()] then
+		return
+	end
 	runfast.players[player:get_player_name()].satiation = 20
 	runfast.players[player:get_player_name()].stamina = 20
 	player:get_inventory():set_width("stomach", 20)
 end)
+
 
 -- Initialize counter variables
 local poll_timer = 0
@@ -327,8 +353,12 @@ end)
 
 -- 20% chance placing reduces satiation by 0.05
 minetest.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack, pointed_thing)
-	if not placer then return end
-	if math.random(1, 5) ~= 5 then return end
+	if not placer then
+		return
+	end
+	if math.random(1, 5) ~= 5 then
+		return
+	end
 	if runfast.players[placer:get_player_name()].satiation >= 1.05 then
 		runfast.players[placer:get_player_name()].satiation = runfast.players[placer:get_player_name()].satiation - 0.05
 	else
@@ -339,8 +369,12 @@ end)
  
 -- 33% chance digging reduces satiation by 0.15
 minetest.register_on_dignode(function(pos, oldnode, digger)
-	if not digger then return end
-	if math.random(1, 3) ~= 3 then return end
+	if not digger then
+		return
+	end
+	if math.random(1, 3) ~= 3 then
+		return
+	end
 	if runfast.players[digger:get_player_name()].satiation >= 1.15 then
 		runfast.players[digger:get_player_name()].satiation = runfast.players[digger:get_player_name()].satiation - 0.1
 	else
