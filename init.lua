@@ -114,14 +114,10 @@ if minetest.is_yes(minetest.setting_getbool("runfast_display_debug_meter")) then
 end
 
 -- Register callbacks
-minetest.register_on_newplayer(function(player)
-	player:get_inventory():set_size("stomach", 1)
-	player:get_inventory():set_width("stomach", 20)
-end)
-
 minetest.register_on_joinplayer(function(player)
-	if runfast.singleplayer then
-		minetest.chat_send_player(player:get_player_name(), "The runfast mod doesn't work properly in singleplayer mode.")
+	if not player:get_inventory():get_list("stomach") then
+		player:get_inventory():set_size("stomach", 1)
+		player:get_inventory():set_width("stomach", 20)
 	end
 	runfast.players[player:get_player_name()] = {
 		sprinting = false,
