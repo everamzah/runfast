@@ -333,6 +333,8 @@ minetest.register_on_item_eat(function(hp_change, replace_with_item, itemstack, 
 		if not runfast.hp_regen then
 			user:set_hp(user:get_hp() + hp_change)
 		end
+		minetest.sound_play("runfast_eat", {to_player = user:get_player_name(), gain = 0.7})
+		itemstack:take_item()
 	else
 		-- Consumed poison
 		if runfast.players[user:get_player_name()].satiation >= 1 then
@@ -341,9 +343,10 @@ minetest.register_on_item_eat(function(hp_change, replace_with_item, itemstack, 
 			runfast.players[user:get_player_name()].satiation = 0
 		end
 		user:set_hp(user:get_hp() + hp_change)
+		minetest.sound_play("runfast_eat", {to_player = user:get_player_name(), gain = 0.7})
+		itemstack:take_item()
 	end
 	user:get_inventory():set_width("stomach", runfast.players[user:get_player_name()].satiation)
-	itemstack:take_item()
 	return itemstack
 end)
 
